@@ -1,12 +1,12 @@
 import numpy as np
 import networkx as nx
-from scipy.sparse import dok_matrix
 from scipy.linalg import block_diag
 import itertools
 import matplotlib.pyplot as plt
+
 ######## WORK TO BE DONE ##########
 """
-For large matrices we get memory errors, I've found that the upper bound on the number of nodes it around 
+For large matrices we get memory errors, I've found that the upper bound on the number of nodes it around
 13,000, after that the ndarray is no longer a good tool to use to store the information about the network.
 Thankfully, these graphs we are working with are fairly sparse so they should be able to be implemented in
 a sparse matrix.
@@ -20,13 +20,16 @@ class DirectedGraph:
     Attributes:
         A (Square, ndarray): the adjecency matrix of a directed graph where A(i,j) is node i receiving from node j
         n (int): the number of nodes in the graph
+        f (tuple (a,f,c)): a (float): effect of node on itself;
+            f (nxn matrix valued function): functional relation between each of the nodes
+            c (float): some constand interaction on the node
         labels (list(str)): list of labels assigned to the nodes of the graph
         labeler (dict(int, str)): maps indices to labels
         indexer (dict(str, int)): maps labels to indices
     '''
     def __init__(self, A, dynamics, labels=None):
         '''
-        Parameters: 
+        Parameters:
             A ((n,n) ndarray): The asjecency matrix to a directed graph where
                 A[i,j] is node i receiving from node j
             Labels (list(str)): labels for the nodes of the graph, defaults to 0 indexing
@@ -45,14 +48,14 @@ class DirectedGraph:
 
         self.A = A
         self.n = n
-        self.f = dynamics
+        self.dynamics = dynamics
         self.indices = np.arange(n)
         self.labeler = dict(zip(np.arange(n), labels))
         self.indexer = dict(zip(labels, np.arange(n)))
         # we use the original indexer when we look at dynamics on the network
         # this dict doesn't change under specialization
         self.original_indexer = self.indexer.copy()
-    
+
     def set_dynamics(self):
         """
         Using a matrix valued function, set the dynamics of the network
@@ -65,7 +68,7 @@ class DirectedGraph:
                 node states and returns the states of the nodes at the next time step
         """
         # here we unpack the different parts of the dynamic function
-        a,f,c = self.f
+        a,f,c = self.dynamics
         F = np.array([None]*self.n)
         for i in range(self.n):
             o_i = self.origination(i)
@@ -91,8 +94,8 @@ class DirectedGraph:
             label = label[:temp_ind]
         return self.original_indexer[label]
 
-    
-    def iterate(self, iters, initial_condition, graph=False):
+
+    def iterate(self, iters, initial_condition, graph=False, save_img=False, title=None):
         """
         Model the dynamics on the network for iters timesteps given an intial condition
 
@@ -110,9 +113,9 @@ class DirectedGraph:
         for _ in range(iters):
             # we pass into the function F the last value of our nodes
             x.append(F(x[-1]))
-        
+
         x = np.array(x)
-        
+
         if graph:
             domain = np.arange(iters+1)
             for i in range(self.n):
@@ -121,12 +124,14 @@ class DirectedGraph:
             plt.ylabel('Node Value')
             plt.title('Network Dynamics')
             plt.legend()
+            if save_img:
+                plt.savefig(title)
             plt.show()
-        
+
         return x
 
-    
-    def specialize_graph(self, base, verbose=False):
+
+    def specialize(self, base, verbose=False):
         """
         Given a base set, specialize the adjacency matrix of a network
 
@@ -137,7 +142,7 @@ class DirectedGraph:
         # if the base was given as a list of nodes then we convert them to the proper indexes
         if type(base[0]) == str:
             for i, k in enumerate(base):
-                base[i] = self.indexer[k] 
+                base[i] = self.indexer[k]
         elif type(base[0]) != int:
             if not np.issubdtype(base[0], np.integer):
                 raise ValueError('base set must be either a list of labels or a list of indices')
@@ -166,20 +171,20 @@ class DirectedGraph:
             components = [comp[k] for k in path]
             paths = self.pathCombinations(components)
             # print(f'this is after path combinations\n{paths}\n')
-            
+
             comp_to_add = [self.A[[self.indexer[k] for k in c], :][:, [self.indexer[k] for k in c]] for c in components[1:-1]].copy()
             for p in paths:
                 diag += comp_to_add
                 links += self.linkAdder(p, n_nodes, components)
                 n_nodes += sum(map(len, comp_to_add))
 
-        
 
-        # we create this diag labeler which will associate an index of the list diag to 
-        # a strongly connected component set, we assume the matrices in diag are not permuted from that 
+
+        # we create this diag labeler which will associate an index of the list diag to
+        # a strongly connected component set, we assume the matrices in diag are not permuted from that
         # which we find in self.A
         diag_labeler = {}
-    
+
         for k in comp:
             # for each strongly connected component we find where in diag this compenents exists
             ind = np.array([self.indexer[i] for i in comp[k]])
@@ -199,12 +204,12 @@ class DirectedGraph:
             for k in range(comp_len):
                 self.labeler[step + k] = diag_labeler[i][k] + f'.{i}'
             step += comp_len
-        
+
         self.update_indexer()
-    
+
         if verbose:
             print(f'This is the original matrix:\n{self.A}\n')
-        
+
         # create the new specialized matrix
         S = block_diag(*diag)
         for l in links: S[l] = 1
@@ -244,16 +249,15 @@ class DirectedGraph:
 
     def baseFirst(self, base):
         """
-        Permutes the A matrix so that the base set corrosponds to the beginning set of 
+        Permutes the A matrix so that the base set corrosponds to the beginning set of
         rows and columns in A
 
         Parameters:
             base (list, int): a list of the indices of the base set
-        
+
         Returns:
             None
         """
-        n = self.A.shape[0]
         # find the indices of the strongly connected set and append them the the end of the base set to for the permutation of A
         to_specialize = [i for i in self.indices if i not in base]
         permute = base + to_specialize
@@ -276,10 +280,10 @@ class DirectedGraph:
 
         Parameters:
             base_size (int): number of nodes in the base set
-        
+
         Returns:
             smallA (ndarray, square): compressed adjacency matrix of A
-            comp (dict, int: list(str)): a labling dictionary maping each node of the compressed 
+            comp (dict, int: list(str)): a labling dictionary maping each node of the compressed
                                          graph to the set of nodes it represents
         """
         # grab a portion of the matrix to find the strongly connected components
@@ -298,7 +302,7 @@ class DirectedGraph:
         comp = {}
         for i in range(base_size):
             comp[i] = [self.labeler[i]]
-        
+
         for i in range(num_comp):
             comp[i+base_size] = [self.labeler[k + base_size] for k in SCComp[i]]
 
@@ -318,18 +322,18 @@ class DirectedGraph:
                 smallA[i,j] = (not (self.A[i_indices, :][:, j_indices] == 0).all())*1.
                 smallA[j,i] = (not (self.A[j_indices, :][:, i_indices] == 0).all())*1.
         return smallA, comp
-    
+
     def findPathsToBase(self, smallA, base_size, comp):
         """
-        Finds all the paths between the base nodes that pass through the specialization set in the 
+        Finds all the paths between the base nodes that pass through the specialization set in the
         compressed graph
 
         Parameters:
             smallA (ndarray): a compressed adjecency matrix
             base_size (int): number of nodes in the base set
-        
+
         Returns:
-            pressed_paths (list, list(str)): list of paths that pass through the specialization set 
+            pressed_paths (list, list(str)): list of paths that pass through the specialization set
         """
         _, N = smallA.shape
         pressed_paths = []
@@ -349,10 +353,10 @@ class DirectedGraph:
                     reducedA[-1,:] = reducedA[0,:]
                     reducedA[0,:] = np.zeros(new_size)
                     G = nx.DiGraph(reducedA.T)
-                    # find paths from the base node to the new node 
+                    # find paths from the base node to the new node
                     # which is the same as finding cycles in this case
                     paths = list(nx.all_simple_paths(G,0,new_size-1))
-                
+
                 else:
                     mask = [b1,b2] + list(range(base_size, N))
                     reducedA = smallA[mask,:][:,mask]
@@ -374,7 +378,7 @@ class DirectedGraph:
 
     def pathCombinations(self, components):
         """
-        Given a path through the connected components of A, find every 
+        Given a path through the connected components of A, find every
         unique combination of edges between the components that can be followed
         to complete the given path
 
@@ -401,10 +405,10 @@ class DirectedGraph:
             edges = zip(rows,cols)
             n_nodes += len(components[i+1])
             link_opt.append(edges)
-        
+
         all_paths = [list(P) for P in itertools.product(*link_opt)]
         return all_paths
-    
+
     def linkAdder(self, path, n_nodes, components):
         """
         Produces the link needed to add a branch of stringly connected components to a graph with n_nodes
@@ -412,7 +416,7 @@ class DirectedGraph:
         Parameters:
             path (list, tuple): edges between component nodes
             n_nodes (int): number of nodes in the original graph
-            components (list, list()): 
+            components (list, list()):
         """
         links = []
         path_length = len(path)
@@ -424,5 +428,5 @@ class DirectedGraph:
                 links.append((path[i][0], path[i][1] + n_nodes - 1))
             else:
                 links.append((path[i][0] + n_nodes - 1, path[i][1] + n_nodes - 1))
-        
+
         return links

@@ -18,22 +18,20 @@ if __name__ == "__main__":
                     [lambda x: 0.5*sig(x), lambda x: 0*x, lambda x: 0*x],
                     [lambda x: 0.5*sig(x), lambda x: 0.5*sig(x), lambda x: 0*x]])
     a = np.array([3/10, 3/10, 3/10])
-    c = np.array([1/4, 0.025, 0])
+    c = np.array([7/4, 5/4, 1/2])
     labels = ['x1', 'x2', 'x3']
 
     G = s.DirectedGraph(B, (a,f,c), labels=labels)
-    G.iterate(80, np.random.random(G.n), graph=True)
+    G.iterate(80, np.random.random(G.n), graph=True, save_img=True, title="3 nodes")
 
-    G.specialize_graph(['x2', 'x3'], verbose=False)
-    G.iterate(80, np.random.random(G.n), graph=True)
+    G.specialize(['x2', 'x3'], verbose=False)
+    G.iterate(80, np.random.random(G.n), graph=True, save_img=True, title='spec on x2, x3')
 
-    G.specialize_graph(['x1.1', 'x1.2', 'x2'], verbose=False)
-    G.iterate(80, np.random.random(G.n), graph=True)
+    G.specialize(['x1.1', 'x1.2', 'x2'], verbose=False)
+    G.iterate(80, np.random.random(G.n), graph=True, save_img=True, title='spec on x11, x12, x2')
 
     # N = nx.DiGraph(G.A.T)
     # nx.draw_networkx_labels(N, pos=nx.spring_layout(N), labels=G.labeler)
     # nx.draw(N, pos=nx.spring_layout(N))
     # plt.draw()
     # plt.show()
-
-
