@@ -89,7 +89,7 @@ class DirectedGraph:
 
         # here we unpack the different parts of the dynamic function
         a,f = self.dynamics
-        # F = np.array([None]*self.n)
+
         F = [None]*self.n
         for i in range(self.n):
             o_i = self.origination(i)
@@ -112,15 +112,16 @@ class DirectedGraph:
         # grab the iterative funciton
         a, f = self.set_dynamics()
         G = lambda t: [a[self.origination(k)](t[k]) + f[k](t) for k in range(self.n)]
+        
         # initialize an array with the initial condition
-        t = [initial_condition]
-        for _ in range(iters):
-            t.append(G(t[-1]))
-
+        t = [None]*iters
+        t[0] = initial_condition
+        for i in range(1,iters):
+            t[i] = G(t[i-1])
         t = np.array(t)
 
         if graph:
-            domain = np.arange(iters+1)
+            domain = np.arange(iters)
             for i in range(self.n):
                 plt.plot(domain, t[:,i], label=self.labeler[i], lw=2)
             plt.xlabel('Time')

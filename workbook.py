@@ -4,6 +4,7 @@ import numpy as np
 from importlib import reload
 import networkx as nx
 import matplotlib.pyplot as plt
+import time
 
 if __name__ == "__main__":
     reload(s)
@@ -68,17 +69,19 @@ test stuff
 
     G = s.DirectedGraph(B, (a,f), labels=labels)
     # G.iterate(80, np.random.random(G.n), graph=True, save_img=True, title="3 nodes")
-    x = G.iterate(80, [1,1,1], graph=True, save_img=True, title="CGNN")
-    print(x)
+    s = time.time()
+    x = G.iterate(800, [1,1,1], graph=True, save_img=True, title="CGNN")
+    e = time.time()
+    print(e-s)
     # print(G.eigen_centrality())
 
-    G.specialize(['x2', 'x3'], verbose=False)
-    G.iterate(80, np.random.random(G.n), graph=True, save_img=True, title='spec on x2, x3')
+    # G.specialize(['x2', 'x3'], verbose=False)
+    # G.iterate(80, np.random.random(G.n), graph=True, save_img=True, title='spec on x2, x3')
     # print(G.eigen_centrality())
 
-    G.specialize(['x1.1', 'x1.2', 'x2'], verbose=False)
-    G.iterate(80, np.random.random(G.n)*10, graph=True, save_img=True, title='spec on x11, x12, x2')
-    print(G.eigen_centrality())
+    # G.specialize(['x1.1', 'x1.2', 'x2'], verbose=False)
+    # G.iterate(80, np.random.random(G.n)*10, graph=True, save_img=True, title='spec on x11, x12, x2')
+    # print(G.eigen_centrality())
 
     # N = nx.DiGraph(G.A.T)
     # nx.draw_networkx_labels(N, pos=nx.spring_layout(N), labels=G.labeler)
