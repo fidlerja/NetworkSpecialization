@@ -1,9 +1,11 @@
 import numpy as np
 import scipy.linalg as la
+import scipy.optimize as opt
 import networkx as nx
-from scipy.linalg import block_diag
 import itertools
 import matplotlib.pyplot as plt
+import autograd as ag
+import autograd.numpy as anp
 
 ######## WORK TO BE DONE ##########
 """
@@ -112,7 +114,7 @@ class DirectedGraph:
         # grab the iterative funciton
         a, f = self.set_dynamics()
         G = lambda t: [a[self.origination(k)](t[k]) + f[k](t) for k in range(self.n)]
-        
+
         # initialize an array with the initial condition
         t = [None]*iters
         t[0] = initial_condition
@@ -214,7 +216,7 @@ class DirectedGraph:
             print(f'This is the original matrix:\n{self.A}\n')
 
         # create the new specialized matrix
-        S = block_diag(*diag)
+        S = la.block_diag(*diag)
         for l in links: S[l] = 1
         self.A = S
         self.indices = np.arange(n_nodes)
@@ -434,7 +436,7 @@ class DirectedGraph:
 
         return links
 
-    def eigen_centrality(self):
+    def structural_eigen_centrality(self):
         B = self.A + np.eye(self.n)
         eigs = la.eig(B)
         i = np.argmax(eigs[0])
@@ -442,3 +444,41 @@ class DirectedGraph:
         p /= p.sum()
         ranks = {self.labeler[i]: np.real(p[i]) for i in range(self.n)}
         return ranks
+
+    def stability_matrix(self):
+        a,f = self.dynamics
+        Df = [[None]*self.n]*self.n
+        for i in range(self.n):
+            result = opt.minimize_scalar(lambda t: -1*ag.grad(a[self.origination(i)])(t))
+            Df[i][i] = np.abs(result['x'])
+            if result['success'] == False:
+                raise Warning('One or more of the functions did not converge to a maximal value')
+        for i in range(self.n):
+            o_i = self.origination(i)
+            for j in range(self.n):
+                o_j = self.origination(j)
+                if (o_i == o_j):
+                    Df[i][j] = 0
+                    continue
+                if (i == j): continue
+                result = opt.minimize_scalar(lambda t: -1*ag.grad(f[o_i,o_j])(t))
+                Df[i][j] = np.abs(result['x'])
+            if result['success'] == False:
+                raise Warning('One or more of the functions did not converge to a maximal value')
+        # if any(successes == False):
+        #     raise Warning('One or more of the functions did not converge to a maximal value')
+        return np.array(Df)
+
+    def eigen_centrality(self):
+        B = self.stability_matrix() + np.eye(self.n)
+        eigs = la.eig(B)
+        i = np.argmax(eigs[0])
+        p = eigs[1][:,i]
+        p /= p.sum()
+        ranks = {self.labeler[i]: np.real(p[i]) for i in range(self.n)}
+        return ranks
+
+    def spectral_radius(self):
+        Df = self.stability_matrix()
+        eigs = la.eig(Df)
+        return np.max(eigs[0])
