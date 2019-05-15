@@ -115,14 +115,17 @@ class DirectedGraph:
         a, f = self.set_dynamics()
         G = lambda t: [a[self.origination(k)](t[k]) + f[k](t) for k in range(self.n)]
 
-        # initialize an array with the initial condition
+        # initialize an array to be of length iters
         t = [None]*iters
+        # set the first entry to be the initial condition
         t[0] = initial_condition
+        # at each step we set the ith entry to be the state of the network at time step i
         for i in range(1,iters):
             t[i] = G(t[i-1])
         t = np.array(t)
 
-        if graph:
+        # if we want to save the figure or graph then we enter this if statement
+        if graph or save_img:
             domain = np.arange(iters)
             for i in range(self.n):
                 plt.plot(domain, t[:,i], label=self.labeler[i], lw=2)
@@ -132,7 +135,8 @@ class DirectedGraph:
             plt.legend()
             if save_img:
                 plt.savefig(title)
-            plt.show()
+            if graph:
+                plt.show()
         return t
 
 
@@ -437,32 +441,57 @@ class DirectedGraph:
         return links
 
     def structural_eigen_centrality(self):
+        """
+        Returns:
+            (dict): (keys) - labels of the nodes; (values) - the associeated eigencentrality
+        """
+        # we shift the matrix to find the true dominant eigen value
         B = self.A + np.eye(self.n)
         eigs = la.eig(B)
         i = np.argmax(eigs[0])
+        # we then extract the eigen vector associated to this value
         p = eigs[1][:,i]
+        # normalize the vector so it sums to 1, i.e. turn it into a probability vector
         p /= p.sum()
         ranks = {self.labeler[i]: np.real(p[i]) for i in range(self.n)}
         return ranks
 
     def stability_matrix(self):
+        """
+        Returns:
+            (ndarray): the stability matrix of the network where the i,j entry is the supremum of the partial
+                    ith function with respect to the jth argument, which is the derivative of the i,jth entry of
+                    self.dynamics[1]
+        """
+        # extract the functions that determine the dynamics
         a,f = self.dynamics
         Df = [[None]*self.n]*self.n
+
+        # first we find the values associated with the self edges
         for i in range(self.n):
+            # we find the maximum (i.e. the minimum of the negative) and assign that value to the stability matrix
             result = opt.minimize_scalar(lambda t: -1*ag.grad(a[self.origination(i)])(t))
             Df[i][i] = np.abs(result['x'])
+            # if any optimization doesn't converge we raise a warning
             if result['success'] == False:
                 raise Warning('One or more of the functions did not converge to a maximal value')
+
+        # next we find the values for all the other edges
         for i in range(self.n):
             o_i = self.origination(i)
             for j in range(self.n):
                 o_j = self.origination(j)
+                # since nodes with the same origination will never have edges between the we set
+                # the value to 0
                 if (o_i == o_j):
                     Df[i][j] = 0
                     continue
+                # we ignore the diagonal enteries
                 if (i == j): continue
+                # compute the same maximization
                 result = opt.minimize_scalar(lambda t: -1*ag.grad(f[o_i,o_j])(t))
                 Df[i][j] = np.abs(result['x'])
+            # if the optimization doesn't converge we raise a warning
             if result['success'] == False:
                 raise Warning('One or more of the functions did not converge to a maximal value')
         # if any(successes == False):
@@ -470,15 +499,27 @@ class DirectedGraph:
         return np.array(Df)
 
     def eigen_centrality(self):
+        """
+        Returns:
+            (dict): (keys) - labels of the nodes; (values) - the eigen centrality of that node
+        """
+        # we shift the matrix to find the true dominant eigen value
         B = self.stability_matrix() + np.eye(self.n)
         eigs = la.eig(B)
         i = np.argmax(eigs[0])
+        # we then extract the eigen vector associated to this value
         p = eigs[1][:,i]
+        # normalize the vector so it sums to 1, i.e. turn it into a probability vector
         p /= p.sum()
         ranks = {self.labeler[i]: np.real(p[i]) for i in range(self.n)}
         return ranks
 
     def spectral_radius(self):
+        """
+        Returns:
+            (float): the spectral radius of the network based on the stability matrix
+        """
         Df = self.stability_matrix()
         eigs = la.eig(Df)
-        return np.max(eigs[0])
+        # find the eigen value with largest modulus, which is the spectral radius
+        return np.max(np.abs(eigs[0]))
