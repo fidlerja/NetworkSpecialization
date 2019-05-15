@@ -5,6 +5,7 @@ from importlib import reload
 import networkx as nx
 import matplotlib.pyplot as plt
 import time
+import autograd.numpy as anp
 
 if __name__ == "__main__":
     reload(s)
@@ -25,7 +26,7 @@ if __name__ == "__main__":
     labelsB = ['y1','y2','y3']
 
     def sig(x):
-        return np.tanh(x)
+        return anp.tanh(x)
     def sig2(x):
         return 2*np.tanh(x)
     def zero(x):
@@ -50,23 +51,24 @@ if __name__ == "__main__":
     ])
     a = np.array([func1,func2,func3,func4,func5])
 
-    # G = s.DirectedGraph(A, (a,f), labels=labelsA)
+    G = s.DirectedGraph(A, (a,f), labels=labelsA)
+    print(G.eigen_centrality())
     # G.iterate(80, np.random.random(G.n)*100, graph=True, save_img=True, title="test2")
 
     # G.specialize(['x1','x2'])
     # G.iterate(80, np.random.random(G.n)*100, graph=True, save_img=True, title="test2 spec 1")
 
-    h = np.array([
-        [zero,func1,zero],
-        [func1,zero,func1],
-        [func1,func1,zero]
-    ])
-    a1 = np.array([zero,zero,zero])
-    H = s.DirectedGraph(B, (a1,h), labels=labelsB)
-    H.iterate(80, np.random.random(H.n)*10, graph=True, save_img=True, title='test_ex2')
+    # h = np.array([
+    #     [zero,func1,zero],
+    #     [func1,zero,func1],
+    #     [func1,func1,zero]
+    # ])
+    # a1 = np.array([zero,zero,zero])
+    # H = s.DirectedGraph(B, (a1,h), labels=labelsB)
+    # H.iterate(80, np.random.random(H.n)*10, graph=True, save_img=True, title='test_ex2')
 
-    H.specialize(['y1','y2'])
-    print(H.A)
-    print(H.labeler)
-    print(H.eigen_centrality())
-    H.iterate(80, np.random.random(H.n)*10, graph=True, save_img=True, title='test_ex2 spec 1')
+    # H.specialize(['y1','y2'])
+    # print(H.A)
+    # print(H.labeler)
+    # print(H.structural_eigen_centrality())
+    # H.iterate(80, np.random.random(H.n)*10, graph=True, save_img=True, title='test_ex2 spec 1')
