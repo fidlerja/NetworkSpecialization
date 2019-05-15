@@ -13,14 +13,10 @@ def detect_sync(G, iter_matrix=False, iters=80, sync_tol=1e-2, otol=1e-1):
 
     Parameters:
         G (DirectedGraph): The DirectedGraph of interest
-
         iter_matrix (ndarray): mxn array containing the values
-            of m dynamic iterations of the n nodes of G
-
+                            of m dynamic iterations of the n nodes of G
         iters (int): number of iterations to produce iter_matrix (for use when iter_matrix is not explicitly passed in)
-
         sync_tol (float): tolerance for synchronization
-
         otol (float): tolerance for stability
 
     Returns:

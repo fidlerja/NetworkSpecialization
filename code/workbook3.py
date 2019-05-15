@@ -36,3 +36,4 @@ if __name__ == "__main__":
     print(G.A)
     print(G.labeler)
     print(G.spectral_radius())
+    print(G.detect_sync())
