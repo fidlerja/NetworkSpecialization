@@ -435,7 +435,7 @@ class DirectedGraph:
         return links
 
     def eigen_centrality(self):
-        B = self.A.T + np.eye(self.n)
+        B = self.A + np.eye(self.n)
         eigs = la.eig(B)
         i = np.argmax(eigs[0])
         p = eigs[1][:,i]
