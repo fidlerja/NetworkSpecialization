@@ -1,9 +1,11 @@
 import numpy as np
 import scipy.linalg as la
+import scipy.optimize as opt
 import networkx as nx
-from scipy.linalg import block_diag
 import itertools
 import matplotlib.pyplot as plt
+import autograd as ag
+import autograd.numpy as anp
 
 ######## WORK TO BE DONE ##########
 """
@@ -112,15 +114,18 @@ class DirectedGraph:
         # grab the iterative funciton
         a, f = self.set_dynamics()
         G = lambda t: [a[self.origination(k)](t[k]) + f[k](t) for k in range(self.n)]
-        
-        # initialize an array with the initial condition
+
+        # initialize an array to be of length iters
         t = [None]*iters
+        # set the first entry to be the initial condition
         t[0] = initial_condition
+        # at each step we set the ith entry to be the state of the network at time step i
         for i in range(1,iters):
             t[i] = G(t[i-1])
         t = np.array(t)
 
-        if graph:
+        # if we want to save the figure or graph then we enter this if statement
+        if graph or save_img:
             domain = np.arange(iters)
             for i in range(self.n):
                 plt.plot(domain, t[:,i], label=self.labeler[i], lw=2)
@@ -130,7 +135,8 @@ class DirectedGraph:
             plt.legend()
             if save_img:
                 plt.savefig(title)
-            plt.show()
+            if graph:
+                plt.show()
         return t
 
 
@@ -214,7 +220,7 @@ class DirectedGraph:
             print(f'This is the original matrix:\n{self.A}\n')
 
         # create the new specialized matrix
-        S = block_diag(*diag)
+        S = la.block_diag(*diag)
         for l in links: S[l] = 1
         self.A = S
         self.indices = np.arange(n_nodes)
@@ -434,11 +440,126 @@ class DirectedGraph:
 
         return links
 
-    def eigen_centrality(self):
-        B = self.A.T + np.eye(self.n)
+    def structural_eigen_centrality(self):
+        """
+        Returns:
+            (dict): (keys) - labels of the nodes; (values) - the associeated eigencentrality
+        """
+        # we shift the matrix to find the true dominant eigen value
+        B = self.A + np.eye(self.n)
         eigs = la.eig(B)
         i = np.argmax(eigs[0])
+        # we then extract the eigen vector associated to this value
         p = eigs[1][:,i]
+        # normalize the vector so it sums to 1, i.e. turn it into a probability vector
         p /= p.sum()
         ranks = {self.labeler[i]: np.real(p[i]) for i in range(self.n)}
         return ranks
+
+    def stability_matrix(self):
+        """
+        Returns:
+            (ndarray): the stability matrix of the network where the i,j entry is the supremum of the partial
+                    ith function with respect to the jth argument, which is the derivative of the i,jth entry of
+                    self.dynamics[1]
+        """
+        # extract the functions that determine the dynamics
+        a,f = self.dynamics
+        Df = [[None]*self.n]*self.n
+
+        # first we find the values associated with the self edges
+        for i in range(self.n):
+            # we find the maximum (i.e. the minimum of the negative) and assign that value to the stability matrix
+            result = opt.minimize_scalar(lambda t: -1*ag.grad(a[self.origination(i)])(t))
+            Df[i][i] = np.abs(result['x'])
+            # if any optimization doesn't converge we raise a warning
+            if result['success'] == False:
+                raise Warning('One or more of the functions did not converge to a maximal value')
+
+        # next we find the values for all the other edges
+        for i in range(self.n):
+            o_i = self.origination(i)
+            for j in range(self.n):
+                o_j = self.origination(j)
+                # since nodes with the same origination will never have edges between the we set
+                # the value to 0
+                if (o_i == o_j):
+                    Df[i][j] = 0
+                    continue
+                # we ignore the diagonal enteries
+                if (i == j): continue
+                # compute the same maximization
+                result = opt.minimize_scalar(lambda t: -1*ag.grad(f[o_i,o_j])(t))
+                Df[i][j] = np.abs(result['x'])
+            # if the optimization doesn't converge we raise a warning
+            if result['success'] == False:
+                raise Warning('One or more of the functions did not converge to a maximal value')
+        # if any(successes == False):
+        #     raise Warning('One or more of the functions did not converge to a maximal value')
+        return np.array(Df)
+
+    def eigen_centrality(self):
+        """
+        Returns:
+            (dict): (keys) - labels of the nodes; (values) - the eigen centrality of that node
+        """
+        # we shift the matrix to find the true dominant eigen value
+        B = self.stability_matrix() + np.eye(self.n)
+        eigs = la.eig(B)
+        i = np.argmax(eigs[0])
+        # we then extract the eigen vector associated to this value
+        p = eigs[1][:,i]
+        # normalize the vector so it sums to 1, i.e. turn it into a probability vector
+        p /= p.sum()
+        ranks = {self.labeler[i]: np.real(p[i]) for i in range(self.n)}
+        return ranks
+
+    def spectral_radius(self):
+        """
+        Returns:
+            (float): the spectral radius of the network based on the stability matrix
+        """
+        Df = self.stability_matrix()
+        eigs = la.eig(Df)
+        # find the eigen value with largest modulus, which is the spectral radius
+        return np.max(np.abs(eigs[0]))
+
+    def detect_sync(self, iters=80, sync_tol=1e-2, otol=1e-1):
+        """
+        Determines which nodes in a network synchronize.
+
+        Parameters:
+            G (DirectedGraph): The DirectedGraph of interest
+            iter_matrix (ndarray): mxn array containing the values
+                                of m dynamic iterations of the n nodes of G
+            iters (int): number of iterations to produce iter_matrix (for use when iter_matrix is not explicitly passed in)
+            sync_tol (float): tolerance for synchronization
+            otol (float): tolerance for stability
+
+        Returns:
+            sync_communities (tuple): of the form ((community), bool), where the bool represents if the community is stable
+        """
+
+        iter_matrix = self.iterate(iters, np.random.random(self.n)*10)
+        # number of nodes in network
+        n = iter_matrix.shape[1]
+
+        # only check the last few rows for convergence
+        A = iter_matrix[-5:, :]
+
+        # tracks which nodes/communities have synchronized
+        sync_communities = []
+        sync_nodes = []
+
+        for node in range(n):
+            if node in sync_nodes:
+                break
+            else:
+                # sync_ind is a list of nodes synchronized with 'node'
+                sync_ind = list(np.where(np.all(np.isclose((A.T - A[:, node]).T, 0, atol=sync_tol), axis=0))[0])
+                # track which nodes have already synchronized so we don't double check
+                sync_nodes.extend(sync_ind)
+                # track communities of synchronization
+                sync_communities.append((tuple(map(lambda x: self.labeler[x], sync_ind)), np.all(np.isclose(A[:, node] - A[-1, node], 0, atol=otol))))
+
+        return sync_communities

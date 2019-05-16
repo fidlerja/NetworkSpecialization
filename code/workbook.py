@@ -37,6 +37,7 @@ if __name__ == "__main__":
         # print(y)
         return y
 
+    # basic cohen - grossberg neural network
     B = np.array([[0,0,1],[1,0,0],[1,1,0]])
     f = np.array([[zero, zero, sig2],
                     [ sig, zero, zero],
@@ -44,6 +45,14 @@ if __name__ == "__main__":
     a = np.array([func1, func2, func3])
     labels = ['x1', 'x2', 'x3']
 
+    # after the first specialization
+    # C = np.array([[0,0,0,1],[0,0,0,1],[0,1,0,0],[1,0,1,0]])
+    # labels2 = ['y1', 'y2', 'y3', 'y4']
+    # b = np.array([func1, func1, func2, func3])
+    # g = np.array([[zero, zero, zero, sig2],
+    #                 [zero, zero, zero, sig2],
+    #                 [zero, sig, zero, zero],
+    #                 [sig, zero, sig, zero]])
 
     """
 test stuff
@@ -66,21 +75,30 @@ test stuff
         print(complex_F[i]([1,1,1]))
     """
 
+    # H = s.DirectedGraph(C, (b,g), labels=labels2)
+    # H.iterate(80, np.random.random(H.n), graph=True, save_img=True, title='first spec hard code corrected')
+
 
     G = s.DirectedGraph(B, (a,f), labels=labels)
     # G.iterate(80, np.random.random(G.n), graph=True, save_img=True, title="3 nodes")
     s = time.time()
-    x = G.iterate(800, [1,1,1], graph=True, save_img=True, title="CGNN")
+    x = G.iterate(800, [1,1,1], graph=False, save_img=True, title="CGNN")
     e = time.time()
     print(e-s)
     # print(G.eigen_centrality())
 
-    # G.specialize(['x2', 'x3'], verbose=False)
-    # G.iterate(80, np.random.random(G.n), graph=True, save_img=True, title='spec on x2, x3')
+    G.specialize(['x1', 'x2'], verbose=False)
+    G.iterate(80, np.random.random(G.n), graph=False, save_img=True, title='spec on x1, x2')
+    # print(G.eigen_centrality())
+
+    print(G.A)
+    print(G.labeler)
+    G.specialize(['x2', 'x3.1', 'x3.2'], verbose=False)
+    G.iterate(80, np.random.random(G.n)*10, graph=True, save_img=True, title='spec on x2, x31, x32')
     # print(G.eigen_centrality())
 
     # G.specialize(['x1.1', 'x1.2', 'x2'], verbose=False)
-    # G.iterate(80, np.random.random(G.n)*10, graph=True, save_img=True, title='spec on x11, x12, x2')
+    # G.iterate(80, np.random.random(G.n)*10, graph=False, save_img=True, title='spec on x11, x12, x2')
     # print(G.eigen_centrality())
 
     # N = nx.DiGraph(G.A.T)
