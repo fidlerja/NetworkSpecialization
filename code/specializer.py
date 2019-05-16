@@ -497,7 +497,7 @@ class DirectedGraph:
                     # we find the maximum (i.e. the minimum of the negative) and assign that value to the stability matrix
                     df = negative_derivitive(a[self.origination(i)])
                     result = opt.minimize_scalar(df)
-                    print(result)
+                    print(df(result['x']))
                     Df[i][i] = np.abs(df(result['x']))
                     # if any optimization doesn't converge we raise a warning
                     if result['success'] == False:
@@ -505,9 +505,10 @@ class DirectedGraph:
                 else:
                     # compute the same maximization
                     df = negative_derivitive(f[o_i,o_j])
-                    plt.plot(dom,df(dom))
-                    plt.show()
+                    # plt.plot(dom,df(dom))
+                    # plt.show()
                     result = opt.minimize_scalar(df)
+                    print(df(result['x']))
                     Df[i][j] = np.abs(df(result['x']))
                     # if the optimization doesn't converge we raise a warning
                     if result['success'] == False:
