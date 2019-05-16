@@ -1,0 +1,10 @@
+
+# General Files ---------------------------------------------------------------
+
+# Extra Python files.
+__init__.py
+__main__.py
+*.py[cdfo]
+__pycache__/
+.ipynb_checkpoints/
+
