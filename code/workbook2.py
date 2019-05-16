@@ -28,7 +28,7 @@ if __name__ == "__main__":
     def sig(x):
         return anp.tanh(x)
     def sig2(x):
-        return 2*np.tanh(x)
+        return 2*anp.tanh(x)
     def zero(x):
         return 0*x
     def func1(x):
@@ -53,9 +53,12 @@ if __name__ == "__main__":
 
     G = s.DirectedGraph(A, (a,f), labels=labelsA)
     print(G.eigen_centrality())
+    print(G.detect_sync())
     # G.iterate(80, np.random.random(G.n)*100, graph=True, save_img=True, title="test2")
 
-    # G.specialize(['x1','x2'])
+    G.specialize(['x1','x2'])
+    print(G.eigen_centrality())
+    print(G.detect_sync())
     # G.iterate(80, np.random.random(G.n)*100, graph=True, save_img=True, title="test2 spec 1")
 
     # h = np.array([

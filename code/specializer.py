@@ -7,14 +7,14 @@ import matplotlib.pyplot as plt
 import autograd as ag
 import autograd.numpy as anp
 
-######## WORK TO BE DONE ##########
+############################################ WORK TO BE DONE ############################################
 """
 For large matrices we get memory errors, I've found that the upper bound on the number of nodes it around
 13,000, after that the ndarray is no longer a good tool to use to store the information about the network.
 Thankfully, these graphs we are working with are fairly sparse so they should be able to be implemented in
 a sparse matrix.
 """
-###################################
+#########################################################################################################
 
 class DirectedGraph:
     '''
@@ -267,7 +267,8 @@ class DirectedGraph:
         Returns:
             None
         """
-        # find the indices of the strongly connected set and append them the the end of the base set to for the permutation of A
+        # find the indices of the strongly connected set and append them to
+        # the end of the base set to for the permutation of A
         to_specialize = [i for i in self.indices if i not in base]
         permute = base + to_specialize
 
@@ -467,14 +468,20 @@ class DirectedGraph:
         a,f = self.dynamics
         Df = [[None]*self.n]*self.n
 
+        def negative_derivitive(f):
+            return lambda t: -1*ag.elementwise_grad(f)(t)
+
+        dom = anp.linspace(-5,5,100)
+
         # first we find the values associated with the self edges
-        for i in range(self.n):
-            # we find the maximum (i.e. the minimum of the negative) and assign that value to the stability matrix
-            result = opt.minimize_scalar(lambda t: -1*ag.grad(a[self.origination(i)])(t))
-            Df[i][i] = np.abs(result['x'])
-            # if any optimization doesn't converge we raise a warning
-            if result['success'] == False:
-                raise Warning('One or more of the functions did not converge to a maximal value')
+        # for i in range(self.n):
+        #     # we find the maximum (i.e. the minimum of the negative) and assign that value to the stability matrix
+        #     df = negative_derivitive(a[self.origination(i)])
+        #     result = opt.minimize_scalar(df)
+        #     Df[i][i] = np.abs(df(result['x']))
+        #     # if any optimization doesn't converge we raise a warning
+        #     if result['success'] == False:
+        #         raise Warning('One or more of the functions did not converge to a maximal value')
 
         # next we find the values for all the other edges
         for i in range(self.n):
@@ -485,17 +492,29 @@ class DirectedGraph:
                 # the value to 0
                 if (o_i == o_j):
                     Df[i][j] = 0
-                    continue
-                # we ignore the diagonal enteries
-                if (i == j): continue
-                # compute the same maximization
-                result = opt.minimize_scalar(lambda t: -1*ag.grad(f[o_i,o_j])(t))
-                Df[i][j] = np.abs(result['x'])
-            # if the optimization doesn't converge we raise a warning
-            if result['success'] == False:
-                raise Warning('One or more of the functions did not converge to a maximal value')
+                elif (i == j):
+                    # these are the values associated with the self edges
+                    # we find the maximum (i.e. the minimum of the negative) and assign that value to the stability matrix
+                    df = negative_derivitive(a[self.origination(i)])
+                    result = opt.minimize_scalar(df)
+                    print(result)
+                    Df[i][i] = np.abs(df(result['x']))
+                    # if any optimization doesn't converge we raise a warning
+                    if result['success'] == False:
+                        raise Warning('One or more of the functions did not converge to a maximal value')
+                else:
+                    # compute the same maximization
+                    df = negative_derivitive(f[o_i,o_j])
+                    plt.plot(dom,df(dom))
+                    plt.show()
+                    result = opt.minimize_scalar(df)
+                    Df[i][j] = np.abs(df(result['x']))
+                    # if the optimization doesn't converge we raise a warning
+                    if result['success'] == False:
+                        raise Warning('One or more of the functions did not converge to a maximal value')
         # if any(successes == False):
         #     raise Warning('One or more of the functions did not converge to a maximal value')
+        print(np.array(Df))
         return np.array(Df)
 
     def eigen_centrality(self):
@@ -532,12 +551,14 @@ class DirectedGraph:
             G (DirectedGraph): The DirectedGraph of interest
             iter_matrix (ndarray): mxn array containing the values
                                 of m dynamic iterations of the n nodes of G
-            iters (int): number of iterations to produce iter_matrix (for use when iter_matrix is not explicitly passed in)
+            iters (int): number of iterations to produce iter_matrix
+                         (for use when iter_matrix is not explicitly passed in)
             sync_tol (float): tolerance for synchronization
             otol (float): tolerance for stability
 
         Returns:
-            sync_communities (tuple): of the form ((community), bool), where the bool represents if the community is stable
+            sync_communities (tuple): of the form ((community), bool),
+                    where the bool represents if the community is stable
         """
 
         iter_matrix = self.iterate(iters, np.random.random(self.n)*10)
