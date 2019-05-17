@@ -7,35 +7,54 @@ import matplotlib.pyplot as plt
 import autograd as ag
 import autograd.numpy as anp
 
-############################################ WORK TO BE DONE ############################################
+
+################################ WORK TO BE DONE ##############################
 """
-For large matrices we get memory errors, I've found that the upper bound on the number of nodes it around
-13,000, after that the ndarray is no longer a good tool to use to store the information about the network.
-Thankfully, these graphs we are working with are fairly sparse so they should be able to be implemented in
-a sparse matrix.
+For large matrices we get memory errors, I've found that the upper bound on the
+number of nodes it around 13,000, after that the ndarray is no longer a good
+tool to use to store the information about the network. Thankfully, these
+graphs we are working with are fairly sparse so they should be able to be
+implemented in a sparse matrix.
 """
-#########################################################################################################
+###############################################################################
+
 
 class DirectedGraph:
-    '''
-    A class that creates a directed graph, mainly to be used to specialize a graph
+
+    """
+    Creates a directed graph that is meant to represent a dynamical network,
+    both it's structure and dynamics
 
     Attributes:
-        A (Square, ndarray): the adjecency matrix of a directed graph where A(i,j) is node i receiving from node j
+        A (Square, ndarray): the adjecency matrix of a directed graph where
+            A(i,j) is node i receiving from node j
         n (int): the number of nodes in the graph
-        f (tuple (a,f)): a (float): effect of node on itself;
-                        f (nxn matrix valued function): functional relation between each of the nodes
+        dynamics (tuple (a,f)):
+            a (float): effect of node on itself
+            f (nxn matrix valued function): functional relation between each
+                of the nodes
         labels (list(str)): list of labels assigned to the nodes of the graph
         labeler (dict(int, str)): maps indices to labels
         indexer (dict(str, int)): maps labels to indices
-    '''
+
+    Methods:
+        specialize()
+        iterate()
+        structural_eigen_centrality()
+        eigen_centrality()
+        detect_sync()
+        spectral_radius()
+    """
+
     def __init__(self, A, dynamics, labels=None):
-        '''
+        """
         Parameters:
             A ((n,n) ndarray): The asjecency matrix to a directed graph where
                 A[i,j] is node i receiving from node j
-            Labels (list(str)): labels for the nodes of the graph, defaults to 0 indexing
-        '''
+            Labels (list(str)): labels for the nodes of the graph, defaults to
+                0 indexing
+        """
+
         n,m = A.shape
         if n != m :
             raise ValueError('Matrix not square')
@@ -45,7 +64,11 @@ class DirectedGraph:
         # defaults to simple 0 indexing
         if type(labels) == type(None):
             labels = [f'{i}' for i in range(n)]
-        elif type(labels) != type(list()) or len(labels) != n or type(labels[0]) != type(str()):
+        elif (
+            type(labels) != type(list()) or
+            len(labels) != n or
+            type(labels[0]) != type(str())
+        ):
             raise ValueError('labels must be a string list of length n')
 
         self.A = A
@@ -58,15 +81,19 @@ class DirectedGraph:
         # this dict doesn't change under specialization
         self.original_indexer = self.indexer.copy()
 
+
+
     def origination(self, i):
         """
-        Returns the original index, associated with the matrix valued dynamics function, of a given node index
+        Returns the original index, associated with the matrix valued dynamics
+        function, of a given node index
 
         Parameters:
             i (int): the current index of a given node in self.A
         Returns:
             o_i (int): the original index of i
         """
+
         label = self.labeler[i]
         # find the first entry in the node's label
         temp_ind = label.find('.')
@@ -80,14 +107,22 @@ class DirectedGraph:
         Using a matrix valued function, set the dynamics of the network
 
         Implicit Parameters:
-            f (nxn matrix valued function): this discribes the independent influence the jth node has on the ith node
-                it will use the format for the position i,j in the matrix, node i receives from node j
+            f (nxn matrix valued function): this discribes the independent
+                influence the jth node has on the ith node it will use the
+                format for the position i,j in the matrix, node i receives
+                from node j
         Returns:
-            F (n-dimensional vector valued function): this is a vector valued function that takes in an ndarray of
-                node states and returns the states of the nodes at the next time step
+            F (n-dimensional vector valued function): this is a vector valued
+                function that takes in an ndarray of node states and returns
+                the states of the nodes at the next time step
         """
+
         def create_component_function(A,f,i, o_i):
-            return lambda x: np.sum([self.A[i,j] * f[o_i,self.origination(j)](x[j]) for j in range(self.n)])
+            """Returns the ith component function of the network"""
+
+            def compt_func(x):
+                return np.sum([self.A[i,j]*f[o_i,self.origination(j)](x[j]) for j in range(self.n)])
+            return compt_func
 
         # here we unpack the different parts of the dynamic function
         a,f = self.dynamics
@@ -95,14 +130,18 @@ class DirectedGraph:
         F = [None]*self.n
         for i in range(self.n):
             o_i = self.origination(i)
-            # for each node we create a component function that works much like matrix multiplication
+            # for each node we create a component function that works much like
+            # matrix multiplication
             F[i] = create_component_function(self.A, f, i, o_i)
-        # we return a vector valued function that can be used for simple iteration
+        # we return a vector valued function that can be used for iteration
         return a, F
 
-    def iterate(self, iters, initial_condition, graph=False, save_img=False, title=None):
+    def iterate(
+            self, iters, initial_condition,
+            graph=False, save_img=False, title=None):
         """
-        Model the dynamics on the network for iters timesteps given an intial condition
+        Model the dynamics on the network for iters timesteps given an intial
+        condition
 
         Parameters
             iters (int): number of timsteps to be simulated
@@ -111,20 +150,21 @@ class DirectedGraph:
         Returns:
             x (ndarray): the states of each node at every time step
         """
+
         # grab the iterative funciton
         a, f = self.set_dynamics()
-        G = lambda t: [a[self.origination(k)](t[k]) + f[k](t) for k in range(self.n)]
+        def G(t): return [a[self.origination(k)](t[k]) + f[k](t) for k in range(self.n)]
 
         # initialize an array to be of length iters
         t = [None]*iters
         # set the first entry to be the initial condition
         t[0] = initial_condition
-        # at each step we set the ith entry to be the state of the network at time step i
+        # the ith entry is the state of the network at time step i
         for i in range(1,iters):
             t[i] = G(t[i-1])
         t = np.array(t)
 
-        # if we want to save the figure or graph then we enter this if statement
+        # for graphing or saving a graph
         if graph or save_img:
             domain = np.arange(iters)
             for i in range(self.n):
@@ -140,21 +180,26 @@ class DirectedGraph:
         return t
 
 
+
     def specialize(self, base, verbose=False):
         """
         Given a base set, specialize the adjacency matrix of a network
 
         Parameters:
-            base (list, int or str): list of base nodes, the other nodes will become the specialized set
+            base (list, int or str): list of base nodes, the other nodes will
+                become the specialized set
             verbose (bool): print out key information as the code executes
         """
-        # if the base was given as a list of nodes then we convert them to the proper indexes
+
+        # if the base was given as a list of nodes then we convert them to the
+        # proper indexes
         if type(base[0]) == str:
             for i, k in enumerate(base):
                 base[i] = self.indexer[k]
         elif type(base[0]) != int:
             if not np.issubdtype(base[0], np.integer):
-                raise ValueError('base set must be either a list of labels or a list of indices')
+                raise ValueError('base set must be either a list of labels'
+                    'or a list of indices')
         if type(base) != list:
             base = list(base)
         if len(base) > self.n:
@@ -162,51 +207,54 @@ class DirectedGraph:
 
         base_size = len(base)
         # permute the matrix so the base set comes first
-        self.baseFirst(base)
+        self._base_first(base)
 
-        # initialize the new specialized matrix as a diagonal matrix with the base set in the first slot
+        # initialize the new specialized matrix as a diagonal matrix with the
+        # base set in the first slot
         B = self.A[:base_size, :base_size].copy()
         diag = [B]
 
         # find the strongly connected components of the network
-        smallA, comp = self.compress_graph(base_size)
+        smallA, comp = self._compress_graph(base_size)
 
-        pressed_paths = self.findPathsToBase(smallA, base_size, comp)
+        pressed_paths = self._find_paths_to_base(smallA, base_size, comp)
 
         n_nodes = base_size
         links = []
 
         for path in pressed_paths:
             components = [comp[k] for k in path]
-            paths = self.pathCombinations(components)
+            paths = self._path_combinations(components)
             # print(f'this is after path combinations\n{paths}\n')
 
             comp_to_add = [self.A[[self.indexer[k] for k in c], :][:, [self.indexer[k] for k in c]] for c in components[1:-1]].copy()
             for p in paths:
                 diag += comp_to_add
-                links += self.linkAdder(p, n_nodes, components)
+                links += self._link_adder(p, n_nodes, components)
                 n_nodes += sum(map(len, comp_to_add))
 
 
 
-        # we create this diag labeler which will associate an index of the list diag to
-        # a strongly connected component set, we assume the matrices in diag are not permuted from that
-        # which we find in self.A
+        # we create this diag labeler which will associate an index of the
+        # list diag to a strongly connected component set, we assume the
+        # matrices in diag are not permuted from that which we find in self.A
         diag_labeler = {}
 
         for k in comp:
-            # for each strongly connected component we find where in diag this compenents exists
+            # for each strongly connected component we find where in diag this
+            # compenents exists
             ind = np.array([self.indexer[i] for i in comp[k]])
             # if the indices are within the base set we don't consider it
             if np.all(ind < len(base)): continue
-            # we pull a sub matrix from self.A that corrosponds to the strongly connected component
+            # we pull a sub matrix from self.A that corrosponds to the strongly
+            # connected component
             temp_block = self.A[ind][:,ind]
             # we check each element of diag to see if it matches the component
             for i, compt in enumerate(diag):
                 if np.all(compt == temp_block):
                     diag_labeler[i] = comp[k]
 
-        # here we update the labeler so that it will label the newly created nodes
+        # we update the labeler to correctly label the newly created nodes
         step = base_size
         for i in range(1,len(diag)):
             comp_len = diag[i].shape[0]
@@ -214,7 +262,7 @@ class DirectedGraph:
                 self.labeler[step + k] = diag_labeler[i][k] + f'.{i}'
             step += comp_len
 
-        self.update_indexer()
+        self._update_indexer()
 
         if verbose:
             print(f'This is the original matrix:\n{self.A}\n')
@@ -236,30 +284,32 @@ class DirectedGraph:
 
         return
 
-    def update_indexer(self):
+    def _update_indexer(self):
         """
         This function assumes that self.labeler is correct in its labeling:
         it reassigns the labels to the correct indices
         """
+
         indices = self.labeler.keys()
         labels = self.labeler.values()
         self.indexer = dict(zip(labels, indices))
         return
 
-    def update_labeler(self):
+    def _update_labeler(self):
         """
         This function assumers that self.indexer is correct in its indexing:
         it reassigns the indices to the correct labels
         """
+
         labels = self.indexer.keys()
         indices = self.indexer.values()
         self.labeler = dict(zip(indices, labels))
         return
 
-    def baseFirst(self, base):
+    def _base_first(self, base):
         """
-        Permutes the A matrix so that the base set corrosponds to the beginning set of
-        rows and columns in A
+        Permutes the A matrix so that the base set corrosponds to the beginning
+        set of rows and columns in A
 
         Parameters:
             base (list, int): a list of the indices of the base set
@@ -267,6 +317,7 @@ class DirectedGraph:
         Returns:
             None
         """
+
         # find the indices of the strongly connected set and append them to
         # the end of the base set to for the permutation of A
         to_specialize = [i for i in self.indices if i not in base]
@@ -274,7 +325,7 @@ class DirectedGraph:
 
         # Change the labeler to reflect the permutation and update the indexer
         self.labeler = {i : self.labeler[permute[i]] for i in range(self.n)}
-        self.update_indexer()
+        self._update_indexer()
 
         # This will rearrange the indices to put the base set first
         pA = self.A[permute,:]
@@ -283,20 +334,21 @@ class DirectedGraph:
         self.A = pA
         return
 
-    def compress_graph(self, base_size):
+    def _compress_graph(self, base_size):
         """
-        Creates a new matrix smallA that is the compressed adjacency matrix of A,
-        each strongly connected component is represented as a single node
+        Creates a new matrix smallA that is the compressed adjacency matrix of
+        A, each strongly connected component is represented as a single node
 
         Parameters:
             base_size (int): number of nodes in the base set
 
         Returns:
             smallA (ndarray, square): compressed adjacency matrix of A
-            comp (dict, int: list(str)): a labling dictionary maping each node of the compressed
-                                         graph to the set of nodes it represents
+            comp (dict, int: list(str)): a labling dictionary maping each node
+                of the compressed graph to the set of nodes it represents
         """
-        # grab a portion of the matrix to find the strongly connected components
+
+        # find the strongly connected components
         spec = self.A[base_size:, base_size:]
 
         # we use nx to create a directed graph of this part
@@ -314,9 +366,10 @@ class DirectedGraph:
             comp[i] = [self.labeler[i]]
 
         for i in range(num_comp):
-            comp[i+base_size] = [self.labeler[k + base_size] for k in SCComp[i]]
+            comp[i+base_size] = [self.labeler[k+base_size] for k in SCComp[i]]
 
-        # smallA will for our compressed A matrix lumping together all the strongly connected components
+        # smallA will for our compressed A matrix lumping together all the
+        # strongly connected components
         smallA = np.zeros((N,N))
         smallA[:base_size, :base_size] = self.A[:base_size, :base_size]
 
@@ -333,18 +386,20 @@ class DirectedGraph:
                 smallA[j,i] = (not (self.A[j_indices, :][:, i_indices] == 0).all())*1.
         return smallA, comp
 
-    def findPathsToBase(self, smallA, base_size, comp):
+    def _find_paths_to_base(self, smallA, base_size, comp):
         """
-        Finds all the paths between the base nodes that pass through the specialization set in the
-        compressed graph
+        Finds all the paths between the base nodes that pass through the
+        specialization set in the compressed graph
 
         Parameters:
             smallA (ndarray): a compressed adjecency matrix
             base_size (int): number of nodes in the base set
 
         Returns:
-            pressed_paths (list, list(str)): list of paths that pass through the specialization set
+            pressed_paths (list, list(str)): list of paths that pass through
+                the specialization set
         """
+
         _, N = smallA.shape
         pressed_paths = []
 
@@ -359,7 +414,8 @@ class DirectedGraph:
                     new_size = len(mask) + 1
                     reducedA = np.zeros((new_size, new_size))
                     reducedA[:-1, :-1] = smallA[mask,:][:, mask]
-                    # remove indoing edges from the base node and add to new node
+                    # remove indoing edges from the base node and add to new
+                    # node
                     reducedA[-1,:] = reducedA[0,:]
                     reducedA[0,:] = np.zeros(new_size)
                     G = nx.DiGraph(reducedA.T)
@@ -386,22 +442,23 @@ class DirectedGraph:
                         pressed_paths.append(p)
         return pressed_paths
 
-    def pathCombinations(self, components):
+    def _path_combinations(self, components):
         """
-        Given a path through the connected components of A, find every
-        unique combination of edges between the components that can be followed
-        to complete the given path
+        Given a path through the connected components of A, find every unique
+        combination of edges between the components that can be followed to
+        complete the given path
 
         Parameters:
             components (list, ):
         """
+
         link_opt = []
         path_length = len(components)
         # n_nodes will keep track of the number of nodes in each branch
         n_nodes = 1
 
         for i in range(path_length - 1):
-            rows, cols = np.where(self.A[[self.indexer[k] for k in components[i+1]],:][:, [self.indexer[k] for k in components[i]]] == 1)
+            rows, cols = np.where(self.A[[self.indexer[k] for k in components[i+1]],:][:,[self.indexer[k] for k in components[i]]] == 1)
 
             if i == 0:
                 cols += [self.indexer[k] for k in components[0]]
@@ -419,15 +476,17 @@ class DirectedGraph:
         all_paths = [list(P) for P in itertools.product(*link_opt)]
         return all_paths
 
-    def linkAdder(self, path, n_nodes, components):
+    def _link_adder(self, path, n_nodes, components):
         """
-        Produces the link needed to add a branch of stringly connected components to a graph with n_nodes
+        Produces the link needed to add a branch of stringly connected
+        components to a graph with n_nodes
 
         Parameters:
             path (list, tuple): edges between component nodes
             n_nodes (int): number of nodes in the original graph
             components (list, list()):
         """
+
         links = []
         path_length = len(path)
 
@@ -441,95 +500,76 @@ class DirectedGraph:
 
         return links
 
-    def structural_eigen_centrality(self):
-        """
-        Returns:
-            (dict): (keys) - labels of the nodes; (values) - the associeated eigencentrality
-        """
-        # we shift the matrix to find the true dominant eigen value
-        B = self.A + np.eye(self.n)
-        eigs = la.eig(B)
-        i = np.argmax(eigs[0])
-        # we then extract the eigen vector associated to this value
-        p = eigs[1][:,i]
-        # normalize the vector so it sums to 1, i.e. turn it into a probability vector
-        p /= p.sum()
-        ranks = {self.labeler[i]: np.real(p[i]) for i in range(self.n)}
-        return ranks
+
 
     def stability_matrix(self):
         """
         Returns:
-            (ndarray): the stability matrix of the network where the i,j entry is the supremum of the partial
-                    ith function with respect to the jth argument, which is the derivative of the i,jth entry of
-                    self.dynamics[1]
+            (ndarray): the stability matrix of the network where the i,j entry
+                is the supremum of the partial ith function with respect to
+                the jth argument, which is the derivative of the i,jth entry
+                of self.dynamics[1]
         """
+
         # extract the functions that determine the dynamics
         a,f = self.dynamics
-        Df = [[None]*self.n]*self.n
+        Df = np.zeros((self.n,self.n))
 
-        def negative_derivitive(f):
-            return lambda t: -1*ag.elementwise_grad(f)(t)
-
-        dom = anp.linspace(-5,5,100)
-
-        # first we find the values associated with the self edges
-        # for i in range(self.n):
-        #     # we find the maximum (i.e. the minimum of the negative) and assign that value to the stability matrix
-        #     df = negative_derivitive(a[self.origination(i)])
-        #     result = opt.minimize_scalar(df)
-        #     Df[i][i] = np.abs(df(result['x']))
-        #     # if any optimization doesn't converge we raise a warning
-        #     if result['success'] == False:
-        #         raise Warning('One or more of the functions did not converge to a maximal value')
-
-        # next we find the values for all the other edges
+        # since the i,j entry of the stability matrix is the absolute
+        # supremum of the partial of the ith function with respect to
+        # the the jth variable we loop through the nxn Df matrix and
+        # look the the derivatives of the entries of the functional
+        # matrix
         for i in range(self.n):
             o_i = self.origination(i)
             for j in range(self.n):
                 o_j = self.origination(j)
-                # since nodes with the same origination will never have edges between the we set
-                # the value to 0
-                if (o_i == o_j):
-                    Df[i][j] = 0
-                elif (i == j):
-                    # these are the values associated with the self edges
-                    # we find the maximum (i.e. the minimum of the negative) and assign that value to the stability matrix
-                    df = negative_derivitive(a[self.origination(i)])
-                    result = opt.minimize_scalar(df)
-                    print(df(result['x']))
-                    Df[i][i] = np.abs(df(result['x']))
-                    # if any optimization doesn't converge we raise a warning
-                    if result['success'] == False:
-                        raise Warning('One or more of the functions did not converge to a maximal value')
+
+                # if i == j we consider the self edge case
+                if i == j:
+                    # find the negative of the function's derivative
+                    func = a[o_i]
+                    def _df(x): return -1.*ag.grad(func)(x)
+                    result = opt.minimize_scalar(_df)
+                    # if the function didn't minimize we raise a warning
+                    if not result['success']:
+                        raise RuntimeWarning(
+                            'one of the derivatives did not minimize')
+                    Df[i,j] = result['fun']
+
+                # since there is never an edge between nodes that share
+                # an origination we set this value to 0
+                elif o_i == o_j:
+                    Df[i,j] = 0
+
+                # here we consider the edges between nodes
                 else:
-                    # compute the same maximization
-                    df = negative_derivitive(f[o_i,o_j])
-                    # plt.plot(dom,df(dom))
-                    # plt.show()
-                    result = opt.minimize_scalar(df)
-                    print(df(result['x']))
-                    Df[i][j] = np.abs(df(result['x']))
-                    # if the optimization doesn't converge we raise a warning
-                    if result['success'] == False:
-                        raise Warning('One or more of the functions did not converge to a maximal value')
-        # if any(successes == False):
-        #     raise Warning('One or more of the functions did not converge to a maximal value')
-        print(np.array(Df))
-        return np.array(Df)
+                    func = f[o_i,o_j]
+                    def _df(x): return -1.*ag.grad(func)(x)
+                    result = opt.minimize_scalar(_df)
+                    if not result['success']:
+                        raise RuntimeWarning(
+                            'one of the derivatives did not minimize')
+                    Df[i,j] = result['fun']
+
+        return Df
 
     def eigen_centrality(self):
         """
         Returns:
-            (dict): (keys) - labels of the nodes; (values) - the eigen centrality of that node
+            (dict):
+                (keys): labels of the nodes
+                (values): the eigen centrality of that node
         """
+
         # we shift the matrix to find the true dominant eigen value
         B = self.stability_matrix() + np.eye(self.n)
         eigs = la.eig(B)
         i = np.argmax(eigs[0])
         # we then extract the eigen vector associated to this value
         p = eigs[1][:,i]
-        # normalize the vector so it sums to 1, i.e. turn it into a probability vector
+        # normalize the vector so it sums to 1, i.e. turn it into a
+        # probability vector
         p /= p.sum()
         ranks = {self.labeler[i]: np.real(p[i]) for i in range(self.n)}
         return ranks
@@ -537,12 +577,35 @@ class DirectedGraph:
     def spectral_radius(self):
         """
         Returns:
-            (float): the spectral radius of the network based on the stability matrix
+            (float): the spectral radius of the network based on the stability
+                matrix
         """
+
         Df = self.stability_matrix()
         eigs = la.eig(Df)
-        # find the eigen value with largest modulus, which is the spectral radius
+        # find the eigen value with largest modulus, which is the spectral
+        # radius
         return np.max(np.abs(eigs[0]))
+
+    def structural_eigen_centrality(self):
+        """
+        Returns:
+            (dict):
+                (keys): labels of the nodes
+                (values): the associeated eigencentrality
+        """
+
+        # we shift the matrix to find the true dominant eigen value
+        B = self.A + np.eye(self.n)
+        eigs = la.eig(B)
+        i = np.argmax(eigs[0])
+        # we then extract the eigen vector associated to this value
+        p = eigs[1][:,i]
+        # normalize the vector so it sums to 1
+        # i.e. turn it into a probability vector
+        p /= p.sum()
+        ranks = {self.labeler[i]: np.real(p[i]) for i in range(self.n)}
+        return ranks
 
     def detect_sync(self, iters=80, sync_tol=1e-2, otol=1e-1):
         """
@@ -550,10 +613,10 @@ class DirectedGraph:
 
         Parameters:
             G (DirectedGraph): The DirectedGraph of interest
-            iter_matrix (ndarray): mxn array containing the values
-                                of m dynamic iterations of the n nodes of G
+            iter_matrix (ndarray): mxn array containing the values of m
+                dynamic iterations of the n nodes of G
             iters (int): number of iterations to produce iter_matrix
-                         (for use when iter_matrix is not explicitly passed in)
+                (for use when iter_matrix is not explicitly passed in)
             sync_tol (float): tolerance for synchronization
             otol (float): tolerance for stability
 
@@ -579,7 +642,8 @@ class DirectedGraph:
             else:
                 # sync_ind is a list of nodes synchronized with 'node'
                 sync_ind = list(np.where(np.all(np.isclose((A.T - A[:, node]).T, 0, atol=sync_tol), axis=0))[0])
-                # track which nodes have already synchronized so we don't double check
+                # track which nodes have already synchronized so we don't
+                # double check
                 sync_nodes.extend(sync_ind)
                 # track communities of synchronization
                 sync_communities.append((tuple(map(lambda x: self.labeler[x], sync_ind)), np.all(np.isclose(A[:, node] - A[-1, node], 0, atol=otol))))
