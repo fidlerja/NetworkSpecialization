@@ -179,7 +179,54 @@ class DirectedGraph:
                 plt.show()
         return t
 
+    def iterate_with_perterbations(
+            self, iters, initial_condition, perterbations,
+            graph=False, save_img=False, title=None):
+        """
+        Model the dynamics on the network for iters timesteps given an intial
+        condition
 
+        Parameters
+            iters (int): number of timsteps to be simulated
+            initial_condition (ndarray): initial conditions of the nodes
+            perterbations (tuple(timesteps, scale)):
+                timesteps (list): time steps to perterb the system at
+                sclar (float): scalar used to scale the random perterbations
+            graph (bool): will graph states of nodes over time if True
+        Returns:
+            x (ndarray): the states of each node at every time step
+        """
+
+        # grab the iterative funciton
+        a, f = self.set_dynamics()
+        def G(t): return [a[self.origination(k)](t[k]) + f[k](t) for k in range(self.n)]
+
+        # initialize an array to be of length iters
+        t = [None]*iters
+        # set the first entry to be the initial condition
+        t[0] = initial_condition
+        # the ith entry is the state of the network at time step i
+        for i in range(1,iters):
+            if i in perterbations[0]:
+                t[i] = t[i-1] + np.random.random(self.n)*perterbations[1]
+            else:
+                t[i] = G(t[i-1])
+        t = np.array(t)
+
+        # for graphing or saving a graph
+        if graph or save_img:
+            domain = np.arange(iters)
+            for i in range(self.n):
+                plt.plot(domain, t[:,i], label=self.labeler[i], lw=2)
+            plt.xlabel('Time')
+            plt.ylabel('Node Value')
+            plt.title('Network Dynamics')
+            plt.legend()
+            if save_img:
+                plt.savefig(title)
+            if graph:
+                plt.show()
+        return t
 
     def specialize(self, base, verbose=False):
         """
