@@ -191,7 +191,7 @@ class DirectedGraph:
             initial_condition (ndarray): initial conditions of the nodes
             perterbations (tuple(timesteps, scale)):
                 timesteps (list): time steps to perterb the system at
-                sclar (float): scalar used to scale the random perterbations
+                scalar (float): scalar used to scale the random perterbations
             graph (bool): will graph states of nodes over time if True
         Returns:
             x (ndarray): the states of each node at every time step
@@ -561,6 +561,7 @@ class DirectedGraph:
         # extract the functions that determine the dynamics
         a,f = self.dynamics
         Df = np.zeros((self.n,self.n))
+        domain = np.linspace(-10,10,50000)
 
         # since the i,j entry of the stability matrix is the absolute
         # supremum of the partial of the ith function with respect to
@@ -576,13 +577,15 @@ class DirectedGraph:
                 if i == j:
                     # find the negative of the function's derivative
                     func = a[o_i]
-                    def _df(x): return -1.*ag.grad(func)(x)
-                    result = opt.minimize_scalar(_df)
+                    def _df(x): return -1.*ag.elementwise_grad(func)(x)
+                    _range = _df(domain)
+                    Df[i,j] = np.max(np.abs(_range))
+                    # result = opt.minimize_scalar(_df)
                     # if the function didn't minimize we raise a warning
-                    if not result['success']:
-                        raise RuntimeWarning(
-                            'one of the derivatives did not minimize')
-                    Df[i,j] = result['fun']
+                    # if not result['success']:
+                    #     raise RuntimeWarning(
+                    #         'one of the derivatives did not minimize')
+                    # Df[i,j] = result['fun']
 
                 # since there is never an edge between nodes that share
                 # an origination we set this value to 0
@@ -592,12 +595,16 @@ class DirectedGraph:
                 # here we consider the edges between nodes
                 else:
                     func = f[o_i,o_j]
-                    def _df(x): return -1.*ag.grad(func)(x)
-                    result = opt.minimize_scalar(_df)
-                    if not result['success']:
-                        raise RuntimeWarning(
-                            'one of the derivatives did not minimize')
-                    Df[i,j] = result['fun']
+                    def _df(x): return -1.*ag.elementwise_grad(func)(x)
+                    _range = _df(domain)
+                    Df[i,j] = np.max(np.abs(_range))
+                    # plt.plot(domain,_range)
+                    # plt.show()
+                    # result = opt.minimize_scalar(_df)
+                    # if not result['success']:
+                    #     raise RuntimeWarning(
+                    #         'one of the derivatives did not minimize')
+                    # Df[i,j] = result['fun']
 
         return Df
 
