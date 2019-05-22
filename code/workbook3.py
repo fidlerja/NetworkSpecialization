@@ -19,8 +19,18 @@ if __name__ == "__main__":
 
     def sig(x):
         return anp.tanh(x)
+    def sig2(x):
+        return -1.*anp.tanh(x)
+    def sig3(x):
+        return -2.0*anp.tanh(x)
     def zero(x):
         return 0*x
+    def f1(x):
+        return 0.9*x + 1/5
+    def f2(x):
+        return 0.9*x + 7/5
+    def f3(x):
+        return 0.9*x + 0.5
 
     f = np.array([
         [zero,zero,zero,sig],
@@ -28,7 +38,7 @@ if __name__ == "__main__":
         [sig,sig,zero,zero],
         [zero,sig,sig,zero]
     ])
-    a = np.array([zero,zero,zero,zero])
+    a = np.array([f3,f1,f2,f3])
     G = s.DirectedGraph(A, (a,f), labels=labelsA)
     G.iterate(80, np.random.random(G.n), graph=True, save_img=True, title="../graphs/test_simple")
 
