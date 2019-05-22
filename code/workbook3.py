@@ -16,10 +16,12 @@ if __name__ == "__main__":
         [0,1,1,0]
     ])
     labelsA = ['x1','x2','x3','x4']
+
     def sig(x):
         return anp.tanh(x)
     def zero(x):
         return 0*x
+
     f = np.array([
         [zero,zero,zero,sig],
         [sig,zero,sig,zero],
@@ -33,7 +35,5 @@ if __name__ == "__main__":
     G.specialize(['x1','x4'])
     G.iterate(80, np.random.random(G.n), graph=True, save_img=True, title="../graphs/test_simple_spec1")
     print(G.eigen_centrality())
-    print(G.A)
-    print(G.labeler)
     print(G.spectral_radius())
     print(G.detect_sync())

@@ -79,13 +79,13 @@ if __name__ == "__main__":
 
     G.specialize(['x1', 'x2'], verbose=False)
     # G.iterate_with_perterbations(1000, np.random.random(G.n), ([500], 150), graph=True, save_img=False, title="3 nodes")
-    G.iterate(80, np.random.random(G.n), graph=True, save_img=True, title='spec on x1, x2')
+    G.iterate(80, np.random.random(G.n), graph=True, save_img=True, title='../graphs/spec on x1, x2')
     print(G.eigen_centrality(), '\n')
     print(G.detect_sync(), '\n')
 
     G.specialize(['x2', 'x3.1', 'x3.2'], verbose=False)
     # G.iterate_with_perterbations(1000, np.random.random(G.n), ([500], 150), graph=True, save_img=False, title="3 nodes")
-    G.iterate(80, np.random.random(G.n)*10, graph=True, save_img=True, title='spec on x2, x31, x32')
+    G.iterate(80, np.random.random(G.n)*10, graph=True, save_img=True, title='../graphs/spec on x2, x31, x32')
     print(G.eigen_centrality(), '\n')
     print(G.detect_sync(), '\n')
 

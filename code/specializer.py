@@ -272,7 +272,6 @@ class DirectedGraph:
         for path in pressed_paths:
             components = [comp[k] for k in path]
             paths = self._path_combinations(components)
-            # print(f'this is after path combinations\n{paths}\n')
 
             comp_to_add = [self.A[[self.indexer[k] for k in c], :][:, [self.indexer[k] for k in c]] for c in components[1:-1]].copy()
             for p in paths:
@@ -505,7 +504,9 @@ class DirectedGraph:
         n_nodes = 1
 
         for i in range(path_length - 1):
-            rows, cols = np.where(self.A[[self.indexer[k] for k in components[i+1]],:][:,[self.indexer[k] for k in components[i]]] == 1)
+            _i = [self.indexer[k] for k in components[i+1]]
+            _j = [self.indexer[k] for k in components[i]]
+            rows, cols = np.where(self.A[_i,:][:,_j] == 1)
 
             if i == 0:
                 cols += [self.indexer[k] for k in components[0]]
@@ -692,14 +693,19 @@ class DirectedGraph:
 
         for node in range(n):
             if node in sync_nodes:
-                break
+                continue
             else:
                 # sync_ind is a list of nodes synchronized with 'node'
-                sync_ind = list(np.where(np.all(np.isclose((A.T - A[:, node]).T, 0, atol=sync_tol), axis=0))[0])
+                _A = (A.T - A[:, node]).T
+                ind = np.where(np.all(np.isclose(_A, 0, atol=sync_tol), axis=0))[0]
+                sync_ind = list(ind)
                 # track which nodes have already synchronized so we don't
                 # double check
-                sync_nodes.extend(sync_ind)
+                sync_nodes.extend(np.ravel(sync_ind))
                 # track communities of synchronization
-                sync_communities.append((tuple(map(lambda x: self.labeler[x], sync_ind)), np.all(np.isclose(A[:, node] - A[-1, node], 0, atol=otol))))
+                maping_func = lambda x: self.labeler[x]
+                sync_tup = tuple(map(maping_func, sync_ind))
+                is_conv = np.all(np.isclose(A[:, node] - A[-1, node], 0, atol=otol))
+                sync_communities.append((sync_tup, is_conv))
 
         return sync_communities
