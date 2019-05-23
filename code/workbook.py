@@ -24,12 +24,13 @@ if __name__ == "__main__":
         # print(x)
         return anp.tanh(x)
     def sig2(x):
-        return -2*anp.tanh(x)
+        y = -2.0*anp.tanh(x)
+        return y
     def zero(x):
         return 0*x
     def func1(x):
         # print(x)
-        y = 9/10 * x + 7/4
+        y = 9/10*x + 7/4
         # print(y)
         return y
     def func2(x):
@@ -43,7 +44,7 @@ if __name__ == "__main__":
         # print(y)
         return y
 
-    # basic cohen - grossberg neural network
+    # basic cohen-grossberg neural network
     B = np.array([
         [0,0,1],
         [1,0,0],
@@ -74,20 +75,17 @@ if __name__ == "__main__":
     G = s.DirectedGraph(B, (a,f), labels=labels)
     print(G.eigen_centrality(), '\n')
     print(G.detect_sync(), '\n')
-    # G.iterate(80, np.random.random(G.n), graph=True, save_img=True, title="3 nodes")
-    # s = time.time()
-    # x = G.iterate(800, [1,1,1], graph=False, save_img=True, title="CGNN")
-    # e = time.time()
-    # print(e-s)
-    # print(G.eigen_centrality())
+    # G.iterate_with_perterbations(1000, np.random.random(G.n), ([500], 150), graph=True, save_img=False, title="3 nodes")
 
     G.specialize(['x1', 'x2'], verbose=False)
-    # G.iterate(80, np.random.random(G.n), graph=False, save_img=True, title='spec on x1, x2')
+    # G.iterate_with_perterbations(1000, np.random.random(G.n), ([500], 150), graph=True, save_img=False, title="3 nodes")
+    G.iterate(80, np.random.random(G.n), graph=True, save_img=True, title='../graphs/spec on x1, x2')
     print(G.eigen_centrality(), '\n')
     print(G.detect_sync(), '\n')
 
     G.specialize(['x2', 'x3.1', 'x3.2'], verbose=False)
-    # G.iterate(80, np.random.random(G.n)*10, graph=True, save_img=True, title='spec on x2, x31, x32')
+    # G.iterate_with_perterbations(1000, np.random.random(G.n), ([500], 150), graph=True, save_img=False, title="3 nodes")
+    G.iterate(80, np.random.random(G.n)*10, graph=True, save_img=True, title='../graphs/spec on x2, x31, x32')
     print(G.eigen_centrality(), '\n')
     print(G.detect_sync(), '\n')
 
