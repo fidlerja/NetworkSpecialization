@@ -10,9 +10,9 @@ import autograd.numpy as anp
 if __name__ == "__main__":
     reload(s)
     A = np.array([
-        [0,0,0,1],
-        [1,0,1,0],
-        [1,1,0,0],
+        [0,1,1,1],
+        [1,0,0,1],
+        [1,1,0,1],
         [0,1,1,0]
     ])
     labelsA = ['x1','x2','x3','x4']
@@ -40,10 +40,10 @@ if __name__ == "__main__":
     ])
     a = np.array([f3,f1,f2,f3])
     G = s.DirectedGraph(A, (a,f), labels=labelsA)
-    G.iterate(80, np.random.random(G.n), graph=True, save_img=True, title="../graphs/test_simple")
-
-    G.specialize(['x1','x4'])
-    G.iterate(80, np.random.random(G.n), graph=True, save_img=True, title="../graphs/test_simple_spec1")
-    print(G.eigen_centrality())
+    
+    for i in range(3):
+        base = np.random.choice(G.indices, 2)
+        G.specialize(base)
+    print(G.n)
+    G.iterate_with_perturbations(300, np.random.random(G.n), ([50], 50), graph=True, save_img=True, title='big network with perturbation')
     print(G.spectral_radius())
-    print(G.detect_sync())
