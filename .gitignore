@@ -7,3 +7,6 @@ __main__.py
 code/__pycache__/
 .ipynb_checkpoints/
 .vscode/
+
+# Hidden Files ----------------------------------------------------------------
+/**/.*
