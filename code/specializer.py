@@ -366,10 +366,7 @@ class DirectedGraph:
 
         # find the indices of the strongly connected set and append them to
         # the end of the base set to for the permutation of A
-<<<<<<< HEAD
-=======
 
->>>>>>> 66ed2b073ae9b08576d8f2a880d94cf11402f785
         to_specialize = [i for i in self.indices if i not in base]
         permute = base + to_specialize
         # Change the labeler to reflect the permutation and update the indexer
