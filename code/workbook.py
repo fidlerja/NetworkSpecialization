@@ -10,6 +10,7 @@ import autograd.numpy as anp
 if __name__ == "__main__":
     reload(s)
 <<<<<<< HEAD
+<<<<<<< HEAD
     # A = np.array([
     #     [0,0,0,0,0,0,1],
     #     [1,0,1,1,0,0,0],
@@ -27,6 +28,10 @@ if __name__ == "__main__":
 
     def sig(x):
 >>>>>>> 46a72d2d85226a042751738f6291551b95c7238b
+=======
+
+    def sig(x):
+>>>>>>> 66ed2b073ae9b08576d8f2a880d94cf11402f785
         return anp.tanh(x)
     def sig2(x):
         y = -2.0*anp.tanh(x)
@@ -34,11 +39,14 @@ if __name__ == "__main__":
     def zero(x):
         return 0*x
 <<<<<<< HEAD
+<<<<<<< HEAD
     def func1(x):
         # print(x)
         y = 9/10*x + 7/4
         # print(y)
 =======
+=======
+>>>>>>> 66ed2b073ae9b08576d8f2a880d94cf11402f785
     def chaotic_func1(x):
         y = anp.tanh(4*x*(1-x)) + 1.75
         return y
@@ -50,7 +58,10 @@ if __name__ == "__main__":
         return y
     def func1(x):
         y = (9/10)*x + 1.75
+<<<<<<< HEAD
 >>>>>>> 46a72d2d85226a042751738f6291551b95c7238b
+=======
+>>>>>>> 66ed2b073ae9b08576d8f2a880d94cf11402f785
         return y
     def func2(x):
         y = (9/10)*x + 1.25
@@ -70,6 +81,7 @@ if __name__ == "__main__":
         [ sig, zero, zero],
         [ sig, sig, zero]
     ])
+<<<<<<< HEAD
 <<<<<<< HEAD
     a = np.array([func1, func2, func3])
     labels = ['x1', 'x2', 'x3']
@@ -111,6 +123,8 @@ if __name__ == "__main__":
     # plt.draw()
     # plt.show()
 =======
+=======
+>>>>>>> 66ed2b073ae9b08576d8f2a880d94cf11402f785
     a = np.array([chaotic_func1, chaotic_func2, chaotic_func3])
     labels = ['x1', 'x2', 'x3']
 
@@ -121,5 +135,9 @@ if __name__ == "__main__":
         G.specialize(base)
     print(G.n)
     G.iterate_with_perturbations(300, np.random.random(G.n), ([150], 10), graph=True, save_img=True, title='../graphs/chaotic cgnn with perturbation')
+<<<<<<< HEAD
     print(G.spectral_radius())
 >>>>>>> 46a72d2d85226a042751738f6291551b95c7238b
+=======
+    print(G.spectral_radius())
+>>>>>>> 66ed2b073ae9b08576d8f2a880d94cf11402f785
