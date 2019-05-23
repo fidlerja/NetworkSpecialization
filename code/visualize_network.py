@@ -10,7 +10,8 @@ import matplotlib.pyplot as plt
 
 
 
-def network_vis(G, iter_matrix=False, spec_layout=False, lin=False, lin_dyn=None, title="Network Visualization", save_img=False, filename='network_viz'):
+def network_vis(G, iter_matrix=False, spec_layout=False, lin=False, lin_dyn=None,
+                title="Network Visualization", save_img=False, filename='network_viz'):
     """ Creates a visualization of the network G
     Parameters:
         G (DirectedGraph): A DirectedGraph object to visualize
