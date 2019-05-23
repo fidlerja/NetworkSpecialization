@@ -40,24 +40,14 @@ if __name__ == "__main__":
     ])
     a = np.array([f3,f1,f2,f3])
     G = s.DirectedGraph(A, (a,f), labels=labelsA)
-<<<<<<< HEAD
-<<<<<<< HEAD
     G.iterate(80, np.random.random(G.n), graph=True, save_img=True, title="../graphs/test_simple")
 
     G.specialize(['x1','x4'])
     G.iterate(80, np.random.random(G.n), graph=True, save_img=True, title="../graphs/test_simple_spec1")
     print(G.eigen_centrality())
-=======
-=======
->>>>>>> 66ed2b073ae9b08576d8f2a880d94cf11402f785
-    
+
     for i in range(3):
         base = np.random.choice(G.indices, 2)
         G.specialize(base)
     print(G.n)
     G.iterate_with_perturbations(300, np.random.random(G.n), ([50], 50), graph=True, save_img=True, title='big network with perturbation')
-<<<<<<< HEAD
->>>>>>> 46a72d2d85226a042751738f6291551b95c7238b
-=======
->>>>>>> 66ed2b073ae9b08576d8f2a880d94cf11402f785
-    print(G.spectral_radius())
