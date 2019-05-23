@@ -179,7 +179,7 @@ class DirectedGraph:
                 plt.show()
         return t
 
-    def iterate_with_perterbations(
+    def iterate_with_perturbations(
             self, iters, initial_condition, perterbations,
             graph=False, save_img=False, title=None):
         """
@@ -368,7 +368,6 @@ class DirectedGraph:
         # the end of the base set to for the permutation of A
         to_specialize = [i for i in self.indices if i not in base]
         permute = base + to_specialize
-
         # Change the labeler to reflect the permutation and update the indexer
         self.labeler = {i : self.labeler[permute[i]] for i in range(self.n)}
         self._update_indexer()
@@ -412,7 +411,8 @@ class DirectedGraph:
             comp[i] = [self.labeler[i]]
 
         for i in range(num_comp):
-            comp[i+base_size] = [self.labeler[k+base_size] for k in SCComp[i]]
+            temp1 = SCComp[i]
+            comp[i+base_size] = [self.labeler[k+base_size] for k in temp1]
 
         # smallA will for our compressed A matrix lumping together all the
         # strongly connected components

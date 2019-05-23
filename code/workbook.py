@@ -9,6 +9,7 @@ import autograd.numpy as anp
 
 if __name__ == "__main__":
     reload(s)
+<<<<<<< HEAD
     # A = np.array([
     #     [0,0,0,0,0,0,1],
     #     [1,0,1,1,0,0,0],
@@ -22,26 +23,40 @@ if __name__ == "__main__":
 
     def sig(x):
         # print(x)
+=======
+
+    def sig(x):
+>>>>>>> 46a72d2d85226a042751738f6291551b95c7238b
         return anp.tanh(x)
     def sig2(x):
         y = -2.0*anp.tanh(x)
         return y
     def zero(x):
         return 0*x
+<<<<<<< HEAD
     def func1(x):
         # print(x)
         y = 9/10*x + 7/4
         # print(y)
+=======
+    def chaotic_func1(x):
+        y = anp.tanh(4*x*(1-x)) + 1.75
+        return y
+    def chaotic_func2(x):
+        y = anp.tanh(4*x*(1-x)) + 1.25
+        return y
+    def chaotic_func3(x):
+        y = anp.tanh(4*x*(1-x)) + 0.25
+        return y
+    def func1(x):
+        y = (9/10)*x + 1.75
+>>>>>>> 46a72d2d85226a042751738f6291551b95c7238b
         return y
     def func2(x):
-        # print(x)
-        y = 9/10 * x + 5/4
-        # print(y)
+        y = (9/10)*x + 1.25
         return y
     def func3(x):
-        # print(x)
-        y = 9/10 * x + 2/4
-        # print(y)
+        y = (9/10)*x + 0.5
         return y
 
     # basic cohen-grossberg neural network
@@ -55,6 +70,7 @@ if __name__ == "__main__":
         [ sig, zero, zero],
         [ sig, sig, zero]
     ])
+<<<<<<< HEAD
     a = np.array([func1, func2, func3])
     labels = ['x1', 'x2', 'x3']
 
@@ -94,3 +110,16 @@ if __name__ == "__main__":
     # nx.draw(N, pos=nx.spring_layout(N))
     # plt.draw()
     # plt.show()
+=======
+    a = np.array([chaotic_func1, chaotic_func2, chaotic_func3])
+    labels = ['x1', 'x2', 'x3']
+
+    G = s.DirectedGraph(B, (a,f), labels=labels)
+
+    for i in range(3):
+        base = np.random.choice(G.indices, 2, replace=False)
+        G.specialize(base)
+    print(G.n)
+    G.iterate_with_perturbations(300, np.random.random(G.n), ([150], 10), graph=True, save_img=True, title='../graphs/chaotic cgnn with perturbation')
+    print(G.spectral_radius())
+>>>>>>> 46a72d2d85226a042751738f6291551b95c7238b
