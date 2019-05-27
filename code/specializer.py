@@ -711,3 +711,7 @@ class DirectedGraph:
                 sync_communities.append((sync_tup, is_conv))
 
         return sync_communities
+
+def in_degree(self):
+    labels = [self.labeler[i] for i in range(self.n)]
+    return dict(zip(labels, np.sum(self.A, axis=1)))
