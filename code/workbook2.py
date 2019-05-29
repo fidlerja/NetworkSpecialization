@@ -43,6 +43,6 @@ if __name__ == "__main__":
     ])
     a = np.array([zero,zero,zero,zero])
     G = s.DirectedGraph(A, (a, f), labels)
-    print(G.A)
     G.specialize(['x1'])
-    print(G.labeler)
+
+    G.network_vis()

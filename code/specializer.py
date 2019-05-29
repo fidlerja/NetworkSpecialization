@@ -228,6 +228,7 @@ class DirectedGraph:
                 plt.show()
         return t
 
+
     def specialize(self, base, verbose=False):
         """
         Given a base set, specialize the adjacency matrix of a network
@@ -546,7 +547,7 @@ class DirectedGraph:
             elif i == path_length - 1:
                 links.append((path[i][0], path[i][1] + n_nodes - 1))
             else:
-                links.append((path[i][0] + n_nodes - 1, path[i][1] + n_nodes - 1))
+                links.append((path[i][0] + n_nodes-1, path[i][1] + n_nodes-1))
 
         return links
 
@@ -664,57 +665,60 @@ class DirectedGraph:
         ranks = {self.labeler[i]: np.real(p[i]) for i in range(self.n)}
         return ranks
 
-    def detect_sync(self, iters=80, sync_tol=1e-2, otol=1e-1):
-        """
-        Determines which nodes in a network synchronize.
-
-        Parameters:
-            G (DirectedGraph): The DirectedGraph of interest
-            iter_matrix (ndarray): mxn array containing the values of m
-                dynamic iterations of the n nodes of G
-            iters (int): number of iterations to produce iter_matrix
-                (for use when iter_matrix is not explicitly passed in)
-            sync_tol (float): tolerance for synchronization
-            otol (float): tolerance for stability
-
-        Returns:
-            sync_communities (tuple): of the form ((community), bool),
-                    where the bool represents if the community is stable
-        """
-
-        iter_matrix = self.iterate(iters, np.random.random(self.n)*10)
-        # number of nodes in network
-        n = iter_matrix.shape[1]
-
-        # only check the last few rows for convergence
-        A = iter_matrix[-5:, :]
-
-        # tracks which nodes/communities have synchronized
-        sync_communities = []
-        sync_nodes = []
-
-        for node in range(n):
-            if node in sync_nodes:
-                continue
-            else:
-                # sync_ind is a list of nodes synchronized with 'node'
-                _A = (A.T - A[:, node]).T
-                ind = np.where(np.all(np.isclose(_A, 0, atol=sync_tol), axis=0))[0]
-                sync_ind = list(ind)
-                # track which nodes have already synchronized so we don't
-                # double check
-                sync_nodes.extend(np.ravel(sync_ind))
-                # track communities of synchronization
-                maping_func = lambda x: self.labeler[x]
-                sync_tup = tuple(map(maping_func, sync_ind))
-                is_conv = np.all(np.isclose(A[:, node] - A[-1, node], 0, atol=otol))
-                sync_communities.append((sync_tup, is_conv))
-
-        return sync_communities
-
     def in_degree(self):
         labels = [self.labeler[i] for i in range(self.n)]
         return dict(zip(labels, np.sum(self.A, axis=1)))
+
+
+    def detect_sync(self, iters=80, sync_tol=1e-2, otol=1e-1):
+            """
+            Determines which nodes in a network synchronize.
+
+            Parameters:
+                G (DirectedGraph): The DirectedGraph of interest
+                iter_matrix (ndarray): mxn array containing the values of m
+                    dynamic iterations of the n nodes of G
+                iters (int): number of iterations to produce iter_matrix
+                    (for use when iter_matrix is not explicitly passed in)
+                sync_tol (float): tolerance for synchronization
+                otol (float): tolerance for stability
+
+            Returns:
+                sync_communities (tuple): of the form ((community), bool),
+                        where the bool represents if the community is stable
+            """
+
+            iter_matrix = self.iterate(iters, np.random.random(self.n)*10)
+            # number of nodes in network
+            n = iter_matrix.shape[1]
+
+            # only check the last few rows for convergence
+            A = iter_matrix[-5:, :]
+
+            # tracks which nodes/communities have synchronized
+            sync_communities = []
+            sync_nodes = []
+
+            for node in range(n):
+                if node in sync_nodes:
+                    continue
+                else:
+                    # sync_ind is a list of nodes synchronized with 'node'
+                    _A = (A.T - A[:, node]).T
+                    is_sync = np.all(np.isclose(_A, 0, atol=sync_tol), axis=0)
+                    ind = np.where(is_sync)[0]
+                    sync_ind = list(ind)
+                    # track which nodes have already synchronized so we don't
+                    # double check
+                    sync_nodes.extend(np.ravel(sync_ind))
+                    # track communities of synchronization
+                    maping_func = lambda x: self.labeler[x]
+                    sync_tup = tuple(map(maping_func, sync_ind))
+                    is_close = np.isclose(A[:,node] - A[-1,node], 0, atol=otol)
+                    is_conv = np.all(is_close)
+                    sync_communities.append((sync_tup, is_conv))
+
+            return sync_communities
 
 
     def network_vis(
@@ -762,28 +766,32 @@ class DirectedGraph:
             edge_weights = nx.get_edge_attributes(nxG, 'weight')
             # edit the edge weights to be the correct dynamics
             for edge in edge_weights:
-                i, j = self.origination(self.indexer[edge[1]]), self.origination(self.indexer[edge[0]])
+                i = self.origination(self.indexer[edge[1]])
+                j = self.origination(self.indexer[edge[0]])
                 edge_weights[edge] = lin_dyn[i, j]
 
 
 
         if spec_layout:
             # draw the network
-            nx.draw_networkx(nxG, pos=nx.drawing.spectral_layout(nxG), node_size=1000,
-                            arrowsize=20, node_color=colors, cmap=plt.cm.Set3)
+            nx.draw_networkx(nxG, pos=nx.drawing.spectral_layout(nxG),
+                node_size=1000, arrowsize=20, node_color=colors,
+                cmap=plt.cm.Set3)
             if lin:
                 # add edge weights
-                nx.draw_networkx_edge_labels(nxG, nx.drawing.spectral_layout(nxG),
-                                            edge_labels=edge_weights)
+                nx.draw_networkx_edge_labels(nxG,
+                    nx.drawing.spectral_layout(nxG), edge_labels=edge_weights)
 
         else:
             # draw the network
-            nx.draw_networkx(nxG, pos=nx.drawing.layout.planar_layout(nxG), node_size=1000,
-                            arrowsize=20, node_color=colors, cmap=plt.cm.Set3)
+            nx.draw_networkx(nxG, pos=nx.drawing.layout.planar_layout(nxG),
+                node_size=1000, arrowsize=20, node_color=colors,
+                cmap=plt.cm.Set3)
             if lin:
                 # add edge weights
-                nx.draw_networkx_edge_labels(nxG, nx.drawing.layout.planar_layout(nxG),
-                                            edge_labels=edge_weights)
+                nx.draw_networkx_edge_labels(nxG,
+                    nx.drawing.layout.planar_layout(nxG),
+                    edge_labels=edge_weights)
 
         plt.title(title)
         if save_img:
