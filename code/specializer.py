@@ -270,36 +270,40 @@ class DirectedGraph:
         n_nodes = base_size
         links = []
 
+        # we create this diag labeler which will associate an index of the
+        # list diag to a strongly connected component set
+        diag_labeler = {}
+        i = 1
+
         for path in pressed_paths:
             components = [comp[k] for k in path]
             paths = self._path_combinations(components)
-
             comp_to_add = [self.A[[self.indexer[k] for k in c], :][:, [self.indexer[k] for k in c]] for c in components[1:-1]].copy()
+
             for p in paths:
+                for compt in components[1:-1]:
+                    diag_labeler[i] = compt
+                    i += 1
                 diag += comp_to_add
                 links += self._link_adder(p, n_nodes, components)
                 n_nodes += sum(map(len, comp_to_add))
 
 
 
-        # we create this diag labeler which will associate an index of the
-        # list diag to a strongly connected component set, we assume the
-        # matrices in diag are not permuted from that which we find in self.A
-        diag_labeler = {}
-
-        for k in comp:
-            # for each strongly connected component we find where in diag this
-            # compenents exists
-            ind = np.array([self.indexer[i] for i in comp[k]])
-            # if the indices are within the base set we don't consider it
-            if np.all(ind < len(base)): continue
-            # we pull a sub matrix from self.A that corrosponds to the strongly
-            # connected component
-            temp_block = self.A[ind][:,ind]
-            # we check each element of diag to see if it matches the component
-            for i, compt in enumerate(diag):
-                if np.all(compt == temp_block):
-                    diag_labeler[i] = comp[k]
+        # diag_labeler1 = {}
+        # for k in comp:
+        #     # for each strongly connected component we find where in diag this
+        #     # compenents exists
+        #     ind = np.array([self.indexer[i] for i in comp[k]])
+        #     # if the indices are within the base set we don't consider it
+        #     if np.all(ind < len(base)): continue
+        #     # we pull a sub matrix from self.A that corrosponds to the strongly
+        #     # connected component
+        #     temp_block = self.A[ind][:,ind]
+        #     # we check each element of diag to see if it matches the component
+        #     for i, compt in enumerate(diag):
+        #         if np.all(compt == temp_block):
+        #             diag_labeler1[i] = comp[k]
 
         # we update the labeler to correctly label the newly created nodes
         step = base_size
