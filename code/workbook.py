@@ -17,8 +17,6 @@ if __name__ == "__main__":
         return y
     def zero(x):
         return 0*x
-    def func1(x):
-        y = 9/10*x + 7/4
     def chaotic_func1(x):
         y = anp.tanh(4*x*(1-x)) + 1.75
         return y
