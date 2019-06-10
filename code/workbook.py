@@ -17,8 +17,6 @@ if __name__ == "__main__":
         return y
     def zero(x):
         return 0*x
-    def func1(x):
-        y = 9/10*x + 7/4
     def chaotic_func1(x):
         y = anp.tanh(4*x*(1-x)) + 1.75
         return y
@@ -40,22 +38,26 @@ if __name__ == "__main__":
 
     # basic cohen-grossberg neural network
     B = np.array([
-        [0,0,1],
-        [1,0,0],
-        [1,1,0]
+        [0,0,0,1],
+        [1,0,1,0],
+        [1,1,0,0],
+        [0,1,1,0]
     ])
     f = np.array([
-        [zero, zero, sig2],
-        [ sig, zero, zero],
-        [ sig, sig, zero]
+        [ zero, zero, sig, sig],
+        [ sig, zero, sig, zero],
+        [ sig, sig, zero, zero],
+        [ zero, sig, sig, zero]
     ])
-    a = np.array([chaotic_func1, chaotic_func2, chaotic_func3])
-    labels = ['x1', 'x2', 'x3']
+    a = np.array([chaotic_func1, chaotic_func2, chaotic_func3, func1])
+    labels = ['x1', 'x2', 'x3', 'x4']
 
     G = s.DirectedGraph(B, (a,f), labels=labels)
 
-    for i in range(3):
-        base = np.random.choice(G.indices, 2, replace=False)
-        G.specialize(base)
-    print(G.n)
-    G.iterate_with_perturbations(300, np.random.random(G.n), ([150], 10), graph=True, save_img=True, title='../graphs/chaotic cgnn with perturbation')
+    # for i in range(3):
+    base = ['x1','x4']
+    G.specialize(base)
+    G.network_vis()
+    # G.iterate(10, np.random.random(G.n), graph=True)
+    # print(G.n)
+    # G.iterate_with_perturbations(300, np.random.random(G.n), ([150], 10), graph=True, save_img=True, title='../graphs/chaotic cgnn with perturbation')
