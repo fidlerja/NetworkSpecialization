@@ -49,5 +49,5 @@ if __name__ == "__main__":
     for i in range(1):
         base = np.random.choice(G.indices, int(G.n*0.9), replace=False)
         G.specialize(base)
-    print(G.n)
+    # print(G.n)
     G.iterate_with_perturbations(300, np.random.random(G.n), ([50], 50), graph=True, save_img=False, title='big network with perturbation')
