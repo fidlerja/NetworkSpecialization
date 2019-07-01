@@ -802,3 +802,10 @@ class DirectedGraph:
             plt.savefig(filename)
 
         plt.show()
+
+
+    def coloring(self):
+        """
+        use the mesoscale paper to write this 
+        """
+        pass
