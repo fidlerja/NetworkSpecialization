@@ -288,8 +288,6 @@ class DirectedGraph:
                 links += self._link_adder(p, n_nodes, components)
                 n_nodes += sum(map(len, comp_to_add))
 
-
-
         # diag_labeler1 = {}
         # for k in comp:
         #     # for each strongly connected component we find where in diag this
@@ -803,9 +801,38 @@ class DirectedGraph:
 
         plt.show()
 
+    def coloring(self, coloring=None):
+        """
+        use the mesoscale paper to write this
+        """
 
-    def coloring(self):
-        """
-        use the mesoscale paper to write this 
-        """
-        pass
+        refine = True
+        # we begin by coloring all the node the same color
+        i = 0
+        colors = {i : self.indices.copy()}
+        k=0
+        # we then iteratively apply input driven refinement to coarsen
+        while refine:
+            final_colors = {}
+            new_clusters = []
+            print(colors, '\n')
+            for color1 in colors.keys():
+                for color2 in colors.keys():
+                    sub_graph = self.A[colors[color1]][:,colors[color2]]
+                    inputs = np.sum(sub_graph, axis=1)
+                    input_nums = set(inputs)
+                    print(colors[color1], colors[color2], inputs, '\n')
+                    for num in input_nums:
+                        cluster = np.where(inputs == num)[0]
+                        new_clusters.append(colors[color1][cluster])
+            # find some way to eliminate the cpoies of the clusters
+            for i, cluster in enumerate(new_clusters):
+                final_colors[i] = cluster
+            if colors == final_colors:
+                refine = False
+            else:
+                colors = final_colors.copy()
+            k += 1
+            if k == 2: refine = False
+
+        return colors
