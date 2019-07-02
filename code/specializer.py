@@ -815,24 +815,27 @@ class DirectedGraph:
         while refine:
             final_colors = {}
             new_clusters = []
-            print(colors, '\n')
             for color1 in colors.keys():
                 for color2 in colors.keys():
+                    temp_new_clusters = []
                     sub_graph = self.A[colors[color1]][:,colors[color2]]
                     inputs = np.sum(sub_graph, axis=1)
                     input_nums = set(inputs)
-                    print(colors[color1], colors[color2], inputs, '\n')
                     for num in input_nums:
                         cluster = np.where(inputs == num)[0]
-                        new_clusters.append(colors[color1][cluster])
+                        cluster = set(colors[color1][cluster])
+                        if cluster not in temp_new_clusters:
+                            temp_new_clusters.append(cluster)
+                for cluster1 in temp_new_clusters:
+                    for cluster2 in temp_new_clusters:
+                        to_add = cluster1.intersection(cluster2)
+                        if to_add:
+                            new_clusters.append(to_add)
             # find some way to eliminate the cpoies of the clusters
             for i, cluster in enumerate(new_clusters):
-                final_colors[i] = cluster
-            if colors == final_colors:
+                final_colors[i] = np.array(list(cluster))
+            if len(colors.keys()) != len(final_colors.keys()):
                 refine = False
-            else:
-                colors = final_colors.copy()
-            k += 1
-            if k == 2: refine = False
+            colors = final_colors.copy()
 
         return colors
