@@ -288,21 +288,6 @@ class DirectedGraph:
                 links += self._link_adder(p, n_nodes, components)
                 n_nodes += sum(map(len, comp_to_add))
 
-        # diag_labeler1 = {}
-        # for k in comp:
-        #     # for each strongly connected component we find where in diag this
-        #     # compenents exists
-        #     ind = np.array([self.indexer[i] for i in comp[k]])
-        #     # if the indices are within the base set we don't consider it
-        #     if np.all(ind < len(base)): continue
-        #     # we pull a sub matrix from self.A that corrosponds to the strongly
-        #     # connected component
-        #     temp_block = self.A[ind][:,ind]
-        #     # we check each element of diag to see if it matches the component
-        #     for i, compt in enumerate(diag):
-        #         if np.all(compt == temp_block):
-        #             diag_labeler1[i] = comp[k]
-
         # we update the labeler to correctly label the newly created nodes
         step = base_size
         for i in range(1,len(diag)):
@@ -808,9 +793,8 @@ class DirectedGraph:
 
         refine = True
         # we begin by coloring all the node the same color
-        i = 0
-        colors = {i : self.indices.copy()}
-        k=0
+        colors = {0 : self.indices.copy()}
+
         # we then iteratively apply input driven refinement to coarsen
         while refine:
             final_colors = {}
