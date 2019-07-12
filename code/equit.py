@@ -55,8 +55,8 @@ if __name__ == "__main__":
     labels = ['1','2','3','4','5','6','7','8','9','10']
 
     G = s.DirectedGraph(A, (a,f), labels=labels)
-    print(G.coloring())
-    # G.network_vis()
+    # print(G.coloring())
+    G.network_vis(use_eqp=True)
 
     # G.specialize(['5','6','7','8','9','10'])
     # G.network_vis()
