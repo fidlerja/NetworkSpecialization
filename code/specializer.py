@@ -709,10 +709,11 @@ class DirectedGraph:
 
 
     def network_vis(
-            self, iter_matrix=False, spec_layout=False, lin=False,
-            lin_dyn=None, title="Network Visualization", save_img=False,
-            filename='network_viz'):
-        """ Creates a visualization of the network G
+            self, use_eqp=False, iter_matrix=False, spec_layout=False,
+            lin=False, lin_dyn=None, title="Network Visualization",
+            save_img=False, filename='network_viz'):
+        """
+        Creates a visualization of the network G
         Parameters:
             G (DirectedGraph): A DirectedGraph object to visualize
             iter_matrix (ndarray): allows you to explicitly pass in the
@@ -728,14 +729,22 @@ class DirectedGraph:
             filename (str): filename
         """
 
-        # find synchronized communities
-        communities = self.detect_sync(iters=80)
+        if use_eqp:
+            colors = self.coloring()
+            group_dict = {}
+            for color in colors.keys():
+                for node in colors[color]:
+                    group_dict[self.labeler[node]] = color
 
-        # create a dictionary mapping each node to its community
-        group_dict = {}
-        for i in range(len(communities)):
-            for node in communities[i][0]:
-                group_dict[node] = i
+        else:
+            # find synchronized communities
+            communities = self.detect_sync(iters=80)
+
+            # create a dictionary mapping each node to its community
+            group_dict = {}
+            for i in range(len(communities)):
+                for node in communities[i][0]:
+                    group_dict[node] = i
 
         # create (and relabel) a networkx graph object
         nxG = nx.relabel.relabel_nodes(nx.DiGraph(self.A.T), self.labeler)
@@ -786,17 +795,21 @@ class DirectedGraph:
 
         plt.show()
 
-    def coloring(self, coloring=None):
+    def coloring(self):
         """
-        use the mesoscale paper to write this
+        This method uses an algorithm that will find the unique coarsest
+        equitable partition of a the graph associated with the network.
+        Returns:
+            dict(int: list): a partition where each of the keys represents a
+                unique color and the associated list a list of indices that
+                are in the cluster
         """
 
-        refine = True
         # we begin by coloring all the node the same color
         colors = {0 : self.indices.copy()}
 
-        # we then iteratively apply input driven refinement to coarsen
-        while refine:
+        #helper function for input driven refinement
+        def _refine(color_dict):
             final_colors = {}
             new_clusters = []
             for color1 in colors.keys():
@@ -815,11 +828,16 @@ class DirectedGraph:
                         to_add = cluster1.intersection(cluster2)
                         if to_add:
                             new_clusters.append(to_add)
-            # find some way to eliminate the cpoies of the clusters
+
             for i, cluster in enumerate(new_clusters):
                 final_colors[i] = np.array(list(cluster))
-            if len(colors.keys()) != len(final_colors.keys()):
+            return final_colors
+        
+        # we then iteratively apply input driven refinement to coarsen
+        refine = True
+        while refine:
+            colors = _refine(colors)
+            #if there are no new colors then the refinement is equivalent
+            if len(colors.keys()) == len(_refine(colors).keys()):
                 refine = False
-            colors = final_colors.copy()
-
         return colors
