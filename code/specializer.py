@@ -36,6 +36,7 @@ class DirectedGraph:
         labels (list(str)): list of labels assigned to the nodes of the graph
         labeler (dict(int, str)): maps indices to labels
         indexer (dict(str, int)): maps labels to indices
+        colors (dict(int, list(int))): cluster dictionary
 
     Methods:
         specialize()
@@ -44,6 +45,8 @@ class DirectedGraph:
         eigen_centrality()
         detect_sync()
         spectral_radius()
+        network_vis()
+        coloring()
     """
 
     def __init__(self, A, dynamics, labels=None):
@@ -80,6 +83,7 @@ class DirectedGraph:
         # we use the original indexer when we look at dynamics on the network
         # this dict doesn't change under specialization
         self.original_indexer = self.indexer.copy()
+        self.colors = dict()
 
 
 
@@ -805,12 +809,11 @@ class DirectedGraph:
                 are in the cluster
         """
 
-        refine = True
         # we begin by coloring all the node the same color
         colors = {0 : self.indices.copy()}
 
-        # we then iteratively apply input driven refinement to coarsen
-        while refine:
+        #helper function for input driven refinement
+        def _refine(color_dict):
             final_colors = {}
             new_clusters = []
             for color1 in colors.keys():
@@ -832,8 +835,13 @@ class DirectedGraph:
 
             for i, cluster in enumerate(new_clusters):
                 final_colors[i] = np.array(list(cluster))
-            if len(colors.keys()) != len(final_colors.keys()):
+            return final_colors
+        
+        # we then iteratively apply input driven refinement to coarsen
+        refine = True
+        while refine:
+            colors = _refine(colors)
+            #if there are no new colors then the refinement is equivalent
+            if len(colors.keys()) == len(_refine(colors).keys()):
                 refine = False
-            colors = final_colors.copy()
-
         return colors
