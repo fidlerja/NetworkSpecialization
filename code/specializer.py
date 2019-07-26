@@ -803,7 +803,8 @@ class DirectedGraph:
         """
         This method uses an algorithm called input driven refinement that will
         find the unique coarsest equitable partition of a the graph associated
-        with the network.
+        with the network. This partition is based only on the structure of the
+        graph, and is not based on other functional elements of the system.
         Returns:
             dict(int: list): a partition where each of the keys represents a
                 unique color and the associated list a list of indices that
