@@ -816,27 +816,37 @@ class DirectedGraph:
         def _refine(color_dict):
             final_colors = {}
             new_clusters = []
-            for color1 in colors.keys():
-                for color2 in colors.keys():
-                    temp_new_clusters = []
-                    sub_graph = self.A[colors[color1]][:,colors[color2]]
+            temp_new_clusters = []
+            changed = True
+            for color1 in color_dict.keys():
+                for color2 in color_dict.keys():
+                    sub_graph = self.A[color_dict[color1]][:,color_dict[color2]]
                     inputs = np.sum(sub_graph, axis=1)
                     input_nums = set(inputs)
                     for num in input_nums:
                         cluster = np.where(inputs == num)[0]
-                        cluster = set(colors[color1][cluster])
+                        cluster = set(color_dict[color1][cluster])
                         if cluster not in temp_new_clusters:
                             temp_new_clusters.append(cluster)
+            counter = 0
+            print('temp new clusters: \n\t', temp_new_clusters)
+            while changed:
+                print('counter:', counter)
+                counter += 1
                 for cluster1 in temp_new_clusters:
                     for cluster2 in temp_new_clusters:
                         to_add = cluster1.intersection(cluster2)
-                        if to_add:
+                        if to_add and to_add not in new_clusters:
                             new_clusters.append(to_add)
+                if len(temp_new_clusters) == len(new_clusters):
+                    changed = False
+
+            print('final clusters: \n\t', new_clusters,'\n\n\n')
 
             for i, cluster in enumerate(new_clusters):
                 final_colors[i] = np.array(list(cluster))
             return final_colors
-        
+
         # we then iteratively apply input driven refinement to coarsen
         refine = True
         while refine:

@@ -57,6 +57,6 @@ if __name__ == "__main__":
     G = s.DirectedGraph(A, (a,f), labels=labels)
     # print(G.coloring())
     G.network_vis(use_eqp=True)
-
-    # G.specialize(['5','6','7','8','9','10'])
-    # G.network_vis()
+    base = ['1','2','3','4']
+    G.specialize(base)
+    G.network_vis(use_eqp=True)
