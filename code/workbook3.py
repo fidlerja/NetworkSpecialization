@@ -37,7 +37,7 @@ if __name__ == "__main__":
         [zero,zero,zero,zero,sig],
         [sig,zero,sig,zero,zero],
         [sig,zero,zero,sig,zero],
-        [sig,zero,sig,zero,zero],
+         [sig,zero,sig,zero,zero],
         [zero,sig,sig,sig,zero]
     ])
     a = np.array([f1]*5)

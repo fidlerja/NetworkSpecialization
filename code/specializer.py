@@ -828,19 +828,18 @@ class DirectedGraph:
                         cluster = set(color_dict[color1][cluster])
                         if cluster not in temp_new_clusters:
                             temp_new_clusters.append(cluster)
-            counter = 0
+            # counter = 0
             print('temp new clusters: \n\t', temp_new_clusters)
-            while changed:
-                print('counter:', counter)
-                counter += 1
-                for cluster1 in temp_new_clusters:
-                    for cluster2 in temp_new_clusters:
-                        to_add = cluster1.intersection(cluster2)
-                        if to_add and to_add not in new_clusters:
-                            new_clusters.append(to_add)
-                if len(temp_new_clusters) == len(new_clusters):
-                    changed = False
-
+            for node in self.indices:
+                potential = None
+                len_potential = np.inf
+                for cluster in temp_new_clusters:
+                    if node in cluster and len(cluster) < len_potential:
+                        potential = cluster.copy()
+                        len_potential = len(potential)
+                if potential not in new_clusters:
+                    new_clusters.append(potential)
+                    
             print('final clusters: \n\t', new_clusters,'\n\n\n')
 
             for i, cluster in enumerate(new_clusters):
