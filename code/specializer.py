@@ -801,35 +801,41 @@ class DirectedGraph:
 
     def coloring(self):
         """
-        This method uses an algorithm that will find the unique coarsest
-        equitable partition of a the graph associated with the network.
+        This method uses an algorithm called input driven refinement that will
+        find the unique coarsest equitable partition of a the graph associated
+        with the network.
         Returns:
             dict(int: list): a partition where each of the keys represents a
                 unique color and the associated list a list of indices that
                 are in the cluster
         """
 
-        # we begin by coloring all the node the same color
-        colors = {0 : self.indices.copy()}
-
         #helper function for input driven refinement
         def _refine(color_dict):
+            # initialize the lists and dictionaries that we need for the input
+            # driven refinement
             final_colors = {}
             new_clusters = []
             temp_new_clusters = []
-            changed = True
+            # for every cluster we examine the inputs from every other cluster
             for color1 in color_dict.keys():
                 for color2 in color_dict.keys():
+                    # create a sub graph that is only of the
+                    # two colors in question
                     sub_graph = self.A[color_dict[color1]][:,color_dict[color2]]
+                    # the row sums will show the number of inputs
+                    # from color2 to color1
                     inputs = np.sum(sub_graph, axis=1)
                     input_nums = set(inputs)
                     for num in input_nums:
                         cluster = np.where(inputs == num)[0]
+                        # use relative indexing to find the correct nodes
                         cluster = set(color_dict[color1][cluster])
                         if cluster not in temp_new_clusters:
                             temp_new_clusters.append(cluster)
-            # counter = 0
-            print('temp new clusters: \n\t', temp_new_clusters)
+
+            # for every node we find the smallest cluster that contains that
+            # node and that is the cluster we submit for the new coloring
             for node in self.indices:
                 potential = None
                 len_potential = np.inf
@@ -839,12 +845,14 @@ class DirectedGraph:
                         len_potential = len(potential)
                 if potential not in new_clusters:
                     new_clusters.append(potential)
-                    
-            print('final clusters: \n\t', new_clusters,'\n\n\n')
 
             for i, cluster in enumerate(new_clusters):
                 final_colors[i] = np.array(list(cluster))
             return final_colors
+
+
+        # we begin by coloring all every node the same color
+        colors = {0 : self.indices.copy()}
 
         # we then iteratively apply input driven refinement to coarsen
         refine = True
