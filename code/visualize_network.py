@@ -26,7 +26,7 @@ def network_vis(G, iter_matrix=False, spec_layout=False, lin=False, lin_dyn=None
         filename (str): filename
     """
     # find synchronized communities
-    communities = G.detect_sync(iters=80)
+    communities = G.detect_sync(iters=200)
 
     # create a dictionary mapping each node to its community
     group_dict = {}
