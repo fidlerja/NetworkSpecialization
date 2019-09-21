@@ -6,6 +6,8 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import time
 import autograd.numpy as anp
+import sys
+np.set_printoptions(threshold=sys.maxsize)
 
 if __name__ == "__main__":
     reload(s)
@@ -29,32 +31,34 @@ if __name__ == "__main__":
     def zero(x):
         return 0*x
     def f1(x):
-        return 0.5*x + 1/5
+        return anp.sin(x)
     def f2(x):
         return 0.9*x + 7/5
     def f3(x):
         return 0.9*x + 0.5
 
     f = np.array([
-        [f1,f1,f1,f1,f1,f1,f1,f1],
-        [f1,f1,f1,f1,f1,f1,f1,f1],
-        [f1,f1,f1,f1,f1,f1,f1,f1],
-        [f1,f1,f1,f1,f1,f1,f1,f1],
-        [f1,f1,f1,f1,f1,f1,f1,f1],
-        [f1,f1,f1,f1,f1,f1,f1,f1],
-        [f1,f1,f1,f1,f1,f1,f1,f1],
-        [f1,f1,f1,f1,f1,f1,f1,f1]
+        [sig,sig,sig,sig,sig,sig,sig,sig],
+        [sig,sig,sig,sig,sig,sig,sig,sig],
+        [sig,sig,sig,sig,sig,sig,sig,sig],
+        [sig,sig,sig,sig,sig,sig,sig,sig],
+        [sig,sig,sig,sig,sig,sig,sig,sig],
+        [sig,sig,sig,sig,sig,sig,sig,sig],
+        [sig,sig,sig,sig,sig,sig,sig,sig],
+        [sig,sig,sig,sig,sig,sig,sig,zero]
     ])
 
-    a = np.array([sig,sig,sig,sig,sig,sig,sig,sig])
+    a = np.array([zero,f1,f1,f1,f1,f1,f1,f1])
     labels = ['1','2','3','4','5','6','7','8']
 
     G = s.DirectedGraph(A, (a,f), labels=labels)
     # print(G.coloring())
     # G.network_vis()#use_eqp=True)
-    G.iterate(300,np.random.random(8),graph=True)
-    base = ['1','8']
+    # G.iterate(20,np.random.random(8),graph=True)
+    base = ['1','8']#,'5','6','7']
     G.specialize(base)
-    G.iterate(300,np.random.random(38),graph=True)
-    # G.network_vis()#use_eqp=True)
+    # with open('half_spec.txt', 'w') as out_file:
+    #     out_file.write(str(G.A))
+    G.iterate(20,np.random.random(38),graph=True)
+    # G.network_vis(use_eqp=True)
     # print(G.n)
