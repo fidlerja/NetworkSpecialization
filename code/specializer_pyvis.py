@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.linalg as la
 import scipy.optimize as opt
+from pyvis.network import Network
 import networkx as nx
 import itertools
 import matplotlib.pyplot as plt
@@ -322,7 +323,7 @@ class DirectedGraph:
 
         if recolor:
             self.colors = self.coloring()
-            
+
         return
 
     def _update_indexer(self):
@@ -737,7 +738,7 @@ class DirectedGraph:
         """
 
         if use_eqp:
-            colors = self.coloring()
+            colors = self.colors
             group_dict = {}
             for color in colors.keys():
                 for node in colors[color]:
@@ -754,15 +755,24 @@ class DirectedGraph:
                     group_dict[node] = i
 
         # create (and relabel) a networkx graph object
+        net = Network(directed=True)
+        net.barnes_hut()
+
         nxG = nx.relabel.relabel_nodes(nx.DiGraph(self.A.T), self.labeler)
 
         # set community membership as an attribute of nxG
         nx.set_node_attributes(nxG, group_dict, name='community')
 
         # list of community number in order of how the nodes are stored
-        colors = [group_dict[node] for node in nxG.nodes()]
+        #colors = [group_dict[node] for node in nxG.nodes()]
 
-        plt.figure()
+        c = ['#'+str(hex(np.random.randint(0,16777215)))[2:] for i in nxG.nodes()]
+        for i in range(len(nxG.nodes())):
+            net.add_node(list(nxG.nodes())[i],color=c[i])
+        net.add_edges(nxG.edges())
+
+        net.show('hi.html')
+
 
         if lin:
             # for display of edge dynamics (linear dynamics only)
@@ -800,7 +810,8 @@ class DirectedGraph:
         if save_img:
             plt.savefig(filename)
 
-        plt.show()
+        # plt.show()
+
 
     def coloring(self):
         """
