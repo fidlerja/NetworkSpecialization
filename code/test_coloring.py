@@ -55,7 +55,7 @@ def basic_test():
 
     G = s.DirectedGraph(A, (a,f), labels=labels)
     G.network_vis(use_eqp=True,spec_layout=False)
-    print(G.coloring())
+    # print(G.coloring())
     G.specialize(['1','4'])
     G.network_vis(use_eqp=True,spec_layout=False)
-    print(G.coloring())
+    # print(G.coloring())

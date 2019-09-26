@@ -20,6 +20,12 @@
         
 
         
+        #config {
+            float: left;
+            width: 400px;
+            height: 600px;
+        }
+        
 
         
 </style>
@@ -29,6 +35,8 @@
 <body>
 <div id = "mynetwork"></div>
 
+
+<div id = "config"></div>
 
 <script type="text/javascript">
 
@@ -47,15 +55,18 @@
         
 
         // parsing and collecting nodes and edges from the python
-        nodes = new vis.DataSet([{"color": "#e08e", "id": "1", "label": "1", "shape": "dot"}, {"color": "#de6301", "id": "2", "label": "2", "shape": "dot"}, {"color": "#8bdf06", "id": "3", "label": "3", "shape": "dot"}, {"color": "#76f3cc", "id": "4", "label": "4", "shape": "dot"}, {"color": "#ace360", "id": "5", "label": "5", "shape": "dot"}, {"color": "#200f5b", "id": "6", "label": "6", "shape": "dot"}, {"color": "#2f41d", "id": "7", "label": "7", "shape": "dot"}, {"color": "#f95ecf", "id": "8", "label": "8", "shape": "dot"}, {"color": "#5dd745", "id": "9", "label": "9", "shape": "dot"}, {"color": "#aeba06", "id": "10", "label": "10", "shape": "dot"}, {"color": "#77d528", "id": "11", "label": "11", "shape": "dot"}, {"color": "#539ea5", "id": "12", "label": "12", "shape": "dot"}, {"color": "#8e0661", "id": "13", "label": "13", "shape": "dot"}, {"color": "#960999", "id": "14", "label": "14", "shape": "dot"}, {"color": "#30a453", "id": "15", "label": "15", "shape": "dot"}, {"color": "#c3850d", "id": "16", "label": "16", "shape": "dot"}, {"color": "#402fd1", "id": "17", "label": "17", "shape": "dot"}, {"color": "#246589", "id": "18", "label": "18", "shape": "dot"}, {"color": "#89cc85", "id": "19", "label": "19", "shape": "dot"}, {"color": "#4c5e51", "id": "20", "label": "20", "shape": "dot"}]);
-        edges = new vis.DataSet([{"arrows": "to", "from": "1", "to": "4"}, {"arrows": "to", "from": "1", "to": "6"}, {"arrows": "to", "from": "1", "to": "9"}, {"arrows": "to", "from": "1", "to": "11"}, {"arrows": "to", "from": "1", "to": "12"}, {"arrows": "to", "from": "1", "to": "13"}, {"arrows": "to", "from": "1", "to": "14"}, {"arrows": "to", "from": "1", "to": "15"}, {"arrows": "to", "from": "1", "to": "17"}, {"arrows": "to", "from": "1", "to": "18"}, {"arrows": "to", "from": "1", "to": "19"}, {"arrows": "to", "from": "1", "to": "20"}, {"arrows": "to", "from": "2", "to": "1"}, {"arrows": "to", "from": "2", "to": "3"}, {"arrows": "to", "from": "2", "to": "8"}, {"arrows": "to", "from": "2", "to": "10"}, {"arrows": "to", "from": "2", "to": "11"}, {"arrows": "to", "from": "2", "to": "14"}, {"arrows": "to", "from": "2", "to": "15"}, {"arrows": "to", "from": "2", "to": "16"}, {"arrows": "to", "from": "2", "to": "17"}, {"arrows": "to", "from": "2", "to": "20"}, {"arrows": "to", "from": "3", "to": "1"}, {"arrows": "to", "from": "3", "to": "2"}, {"arrows": "to", "from": "3", "to": "4"}, {"arrows": "to", "from": "3", "to": "6"}, {"arrows": "to", "from": "3", "to": "9"}, {"arrows": "to", "from": "3", "to": "11"}, {"arrows": "to", "from": "3", "to": "12"}, {"arrows": "to", "from": "3", "to": "14"}, {"arrows": "to", "from": "3", "to": "15"}, {"arrows": "to", "from": "3", "to": "18"}, {"arrows": "to", "from": "3", "to": "20"}, {"arrows": "to", "from": "4", "to": "2"}, {"arrows": "to", "from": "4", "to": "6"}, {"arrows": "to", "from": "4", "to": "13"}, {"arrows": "to", "from": "4", "to": "14"}, {"arrows": "to", "from": "4", "to": "15"}, {"arrows": "to", "from": "4", "to": "16"}, {"arrows": "to", "from": "4", "to": "18"}, {"arrows": "to", "from": "4", "to": "19"}, {"arrows": "to", "from": "4", "to": "20"}, {"arrows": "to", "from": "5", "to": "2"}, {"arrows": "to", "from": "5", "to": "4"}, {"arrows": "to", "from": "5", "to": "6"}, {"arrows": "to", "from": "5", "to": "7"}, {"arrows": "to", "from": "5", "to": "8"}, {"arrows": "to", "from": "5", "to": "10"}, {"arrows": "to", "from": "5", "to": "13"}, {"arrows": "to", "from": "5", "to": "14"}, {"arrows": "to", "from": "5", "to": "19"}, {"arrows": "to", "from": "6", "to": "4"}, {"arrows": "to", "from": "6", "to": "11"}, {"arrows": "to", "from": "6", "to": "12"}, {"arrows": "to", "from": "6", "to": "15"}, {"arrows": "to", "from": "6", "to": "17"}, {"arrows": "to", "from": "6", "to": "18"}, {"arrows": "to", "from": "6", "to": "19"}, {"arrows": "to", "from": "6", "to": "20"}, {"arrows": "to", "from": "7", "to": "3"}, {"arrows": "to", "from": "7", "to": "4"}, {"arrows": "to", "from": "7", "to": "10"}, {"arrows": "to", "from": "7", "to": "12"}, {"arrows": "to", "from": "7", "to": "13"}, {"arrows": "to", "from": "7", "to": "14"}, {"arrows": "to", "from": "7", "to": "16"}, {"arrows": "to", "from": "7", "to": "20"}, {"arrows": "to", "from": "8", "to": "1"}, {"arrows": "to", "from": "8", "to": "2"}, {"arrows": "to", "from": "8", "to": "4"}, {"arrows": "to", "from": "8", "to": "6"}, {"arrows": "to", "from": "8", "to": "7"}, {"arrows": "to", "from": "8", "to": "9"}, {"arrows": "to", "from": "8", "to": "13"}, {"arrows": "to", "from": "8", "to": "14"}, {"arrows": "to", "from": "8", "to": "15"}, {"arrows": "to", "from": "8", "to": "17"}, {"arrows": "to", "from": "8", "to": "18"}, {"arrows": "to", "from": "8", "to": "19"}, {"arrows": "to", "from": "8", "to": "20"}, {"arrows": "to", "from": "9", "to": "5"}, {"arrows": "to", "from": "9", "to": "6"}, {"arrows": "to", "from": "9", "to": "7"}, {"arrows": "to", "from": "9", "to": "10"}, {"arrows": "to", "from": "9", "to": "11"}, {"arrows": "to", "from": "9", "to": "12"}, {"arrows": "to", "from": "9", "to": "14"}, {"arrows": "to", "from": "9", "to": "17"}, {"arrows": "to", "from": "9", "to": "18"}, {"arrows": "to", "from": "9", "to": "19"}, {"arrows": "to", "from": "9", "to": "20"}, {"arrows": "to", "from": "10", "to": "1"}, {"arrows": "to", "from": "10", "to": "2"}, {"arrows": "to", "from": "10", "to": "3"}, {"arrows": "to", "from": "10", "to": "6"}, {"arrows": "to", "from": "10", "to": "9"}, {"arrows": "to", "from": "10", "to": "11"}, {"arrows": "to", "from": "10", "to": "15"}, {"arrows": "to", "from": "10", "to": "16"}, {"arrows": "to", "from": "10", "to": "17"}, {"arrows": "to", "from": "11", "to": "1"}, {"arrows": "to", "from": "11", "to": "2"}, {"arrows": "to", "from": "11", "to": "3"}, {"arrows": "to", "from": "11", "to": "5"}, {"arrows": "to", "from": "11", "to": "7"}, {"arrows": "to", "from": "11", "to": "8"}, {"arrows": "to", "from": "11", "to": "10"}, {"arrows": "to", "from": "11", "to": "12"}, {"arrows": "to", "from": "11", "to": "19"}, {"arrows": "to", "from": "11", "to": "20"}, {"arrows": "to", "from": "12", "to": "1"}, {"arrows": "to", "from": "12", "to": "3"}, {"arrows": "to", "from": "12", "to": "5"}, {"arrows": "to", "from": "12", "to": "7"}, {"arrows": "to", "from": "12", "to": "9"}, {"arrows": "to", "from": "12", "to": "13"}, {"arrows": "to", "from": "12", "to": "15"}, {"arrows": "to", "from": "12", "to": "16"}, {"arrows": "to", "from": "12", "to": "17"}, {"arrows": "to", "from": "12", "to": "18"}, {"arrows": "to", "from": "13", "to": "1"}, {"arrows": "to", "from": "13", "to": "2"}, {"arrows": "to", "from": "13", "to": "3"}, {"arrows": "to", "from": "13", "to": "5"}, {"arrows": "to", "from": "13", "to": "7"}, {"arrows": "to", "from": "13", "to": "8"}, {"arrows": "to", "from": "13", "to": "9"}, {"arrows": "to", "from": "13", "to": "10"}, {"arrows": "to", "from": "13", "to": "12"}, {"arrows": "to", "from": "13", "to": "14"}, {"arrows": "to", "from": "13", "to": "18"}, {"arrows": "to", "from": "13", "to": "20"}, {"arrows": "to", "from": "14", "to": "1"}, {"arrows": "to", "from": "14", "to": "6"}, {"arrows": "to", "from": "14", "to": "8"}, {"arrows": "to", "from": "14", "to": "9"}, {"arrows": "to", "from": "14", "to": "12"}, {"arrows": "to", "from": "14", "to": "15"}, {"arrows": "to", "from": "14", "to": "19"}, {"arrows": "to", "from": "15", "to": "1"}, {"arrows": "to", "from": "15", "to": "2"}, {"arrows": "to", "from": "15", "to": "4"}, {"arrows": "to", "from": "15", "to": "6"}, {"arrows": "to", "from": "15", "to": "7"}, {"arrows": "to", "from": "15", "to": "8"}, {"arrows": "to", "from": "15", "to": "11"}, {"arrows": "to", "from": "15", "to": "13"}, {"arrows": "to", "from": "15", "to": "16"}, {"arrows": "to", "from": "15", "to": "17"}, {"arrows": "to", "from": "15", "to": "20"}, {"arrows": "to", "from": "16", "to": "1"}, {"arrows": "to", "from": "16", "to": "4"}, {"arrows": "to", "from": "16", "to": "6"}, {"arrows": "to", "from": "16", "to": "8"}, {"arrows": "to", "from": "16", "to": "12"}, {"arrows": "to", "from": "16", "to": "17"}, {"arrows": "to", "from": "16", "to": "19"}, {"arrows": "to", "from": "17", "to": "1"}, {"arrows": "to", "from": "17", "to": "2"}, {"arrows": "to", "from": "17", "to": "3"}, {"arrows": "to", "from": "17", "to": "4"}, {"arrows": "to", "from": "17", "to": "8"}, {"arrows": "to", "from": "17", "to": "9"}, {"arrows": "to", "from": "17", "to": "10"}, {"arrows": "to", "from": "17", "to": "12"}, {"arrows": "to", "from": "17", "to": "13"}, {"arrows": "to", "from": "17", "to": "15"}, {"arrows": "to", "from": "17", "to": "16"}, {"arrows": "to", "from": "17", "to": "18"}, {"arrows": "to", "from": "17", "to": "19"}, {"arrows": "to", "from": "18", "to": "1"}, {"arrows": "to", "from": "18", "to": "2"}, {"arrows": "to", "from": "18", "to": "3"}, {"arrows": "to", "from": "18", "to": "5"}, {"arrows": "to", "from": "18", "to": "6"}, {"arrows": "to", "from": "18", "to": "8"}, {"arrows": "to", "from": "18", "to": "9"}, {"arrows": "to", "from": "18", "to": "11"}, {"arrows": "to", "from": "18", "to": "12"}, {"arrows": "to", "from": "18", "to": "14"}, {"arrows": "to", "from": "18", "to": "16"}, {"arrows": "to", "from": "18", "to": "20"}, {"arrows": "to", "from": "19", "to": "1"}, {"arrows": "to", "from": "19", "to": "2"}, {"arrows": "to", "from": "19", "to": "4"}, {"arrows": "to", "from": "19", "to": "7"}, {"arrows": "to", "from": "19", "to": "10"}, {"arrows": "to", "from": "19", "to": "11"}, {"arrows": "to", "from": "19", "to": "12"}, {"arrows": "to", "from": "19", "to": "16"}, {"arrows": "to", "from": "19", "to": "20"}, {"arrows": "to", "from": "20", "to": "1"}, {"arrows": "to", "from": "20", "to": "2"}, {"arrows": "to", "from": "20", "to": "3"}, {"arrows": "to", "from": "20", "to": "5"}, {"arrows": "to", "from": "20", "to": "9"}, {"arrows": "to", "from": "20", "to": "10"}, {"arrows": "to", "from": "20", "to": "11"}, {"arrows": "to", "from": "20", "to": "13"}, {"arrows": "to", "from": "20", "to": "14"}, {"arrows": "to", "from": "20", "to": "15"}, {"arrows": "to", "from": "20", "to": "16"}, {"arrows": "to", "from": "20", "to": "17"}, {"arrows": "to", "from": "20", "to": "18"}]);
+        nodes = new vis.DataSet([{"color": "#7b3e9d", "id": "1", "label": "1", "shape": "dot", "value": 1}, {"color": "#44b1fa", "id": "2", "label": "2", "shape": "dot", "value": 1}, {"color": "#74f6a5", "id": "3", "label": "3", "shape": "dot", "value": 1}, {"color": "#74f6a5", "id": "5", "label": "5", "shape": "dot", "value": 1}, {"color": "#dee31e", "id": "4", "label": "4", "shape": "dot", "value": 1}, {"color": "#dee31e", "id": "6", "label": "6", "shape": "dot", "value": 1}]);
+        edges = new vis.DataSet([{"arrows": "to", "from": "1", "to": "2"}, {"arrows": "to", "from": "1", "to": "3"}, {"arrows": "to", "from": "1", "to": "4"}, {"arrows": "to", "from": "1", "to": "5"}, {"arrows": "to", "from": "1", "to": "6"}, {"arrows": "to", "from": "2", "to": "3"}, {"arrows": "to", "from": "2", "to": "5"}, {"arrows": "to", "from": "3", "to": "1"}, {"arrows": "to", "from": "3", "to": "2"}, {"arrows": "to", "from": "3", "to": "4"}, {"arrows": "to", "from": "3", "to": "6"}, {"arrows": "to", "from": "4", "to": "1"}, {"arrows": "to", "from": "4", "to": "3"}, {"arrows": "to", "from": "5", "to": "1"}, {"arrows": "to", "from": "5", "to": "4"}, {"arrows": "to", "from": "5", "to": "6"}, {"arrows": "to", "from": "6", "to": "1"}, {"arrows": "to", "from": "6", "to": "5"}]);
 
         // adding nodes and edges to the graph
         data = {nodes: nodes, edges: edges};
 
         var options = {
     "configure": {
-        "enabled": false
+        "enabled": true,
+        "filter": [
+            "physics"
+        ]
     },
     "edges": {
         "color": {
@@ -76,7 +87,7 @@
             "avoidOverlap": 0,
             "centralGravity": 0.3,
             "damping": 0.09,
-            "gravitationalConstant": -80000,
+            "gravitationalConstant": -30000,
             "springConstant": 0.001,
             "springLength": 250
         },
@@ -93,6 +104,10 @@
         
         
 
+        
+        // if this network requires displaying the configure window,
+        // put it in its div
+        options.configure["container"] = document.getElementById("config");
         
 
         network = new vis.Network(container, data, options);

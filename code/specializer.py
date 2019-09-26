@@ -322,7 +322,7 @@ class DirectedGraph:
 
         if recolor:
             self.colors = self.coloring()
-            
+
         return
 
     def _update_indexer(self):
@@ -800,7 +800,7 @@ class DirectedGraph:
         if save_img:
             plt.savefig(filename)
 
-        plt.show()
+        # plt.show()
 
     def coloring(self):
         """
