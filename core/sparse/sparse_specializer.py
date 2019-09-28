@@ -102,20 +102,28 @@ class DirectedGraph:
 
     def origination(self, i):
         """
-        Returns the original index, associated with the matrix valued dynamics
-        function, of a given node index
+        Returns the index that the specialized index i was originally associated
+            with for the matrix valued dynamics function
 
         Parameters:
-            i (int): the current index of a given node in self.A
+            i (int): the current index of a given node in the (possibly
+                specialized) network given self.A
+
         Returns:
             o_i (int): the original index of i
         """
+        # current (possibly specialized) label
         label = self.labeler[i]
-        # find the first entry in the node's label
+
+        # original label is everything before the first '.'
         temp_ind = label.find('.')
+
         # if 'label' is not the original label we use temp_ind
         if temp_ind != -1:
+            # set label to be everything before the first '.'
             label = label[:temp_ind]
+
+        # return the original index associated with this label
         return self.original_indexer[label]
 
     def set_dynamics(self):
@@ -163,6 +171,7 @@ class DirectedGraph:
             iters (int): number of timsteps to be simulated
             initial_condition (ndarray): initial conditions of the nodes
             graph (bool): will graph states of nodes over time if True
+
         Returns:
             x (ndarray): the states of each node at every time step
         """
