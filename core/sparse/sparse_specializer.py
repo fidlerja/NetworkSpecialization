@@ -49,7 +49,7 @@ class DirectedGraph:
         coloring()
     """
 
-    def __init__(self, A, dynamics, labels=None):
+    def __init__(self, A, dynamics=None, labels=None):
         """
         Parameters:
             A ((n,n) ndarray (sparse)): Adjacency matrix to a directed graph
@@ -62,7 +62,7 @@ class DirectedGraph:
                 0 indexing
         """
         # convert A to sparse.csr_matrix
-        A = sparse.csr_matrix(A)
+        A = sparse.csr_matrix(A).astype(int)
 
         n,m = A.shape
         # matrix must be nxn and should not have self edges
@@ -72,16 +72,16 @@ class DirectedGraph:
             raise ValueError('Some nodes have self edges')
 
         # define node labels if not passed in
-        if type(labels) == None:
+        if labels is None:
             # defaults to [0, 1, ..., n-1]
             labels = [f'{i}' for i in range(n)]
+        # check that labels is formatted correctly
         elif (
-            # check that labels is formatted correctly
             type(labels) is not list or
             len(labels) != n or
             type(labels[0]) is not str
         ):
-            raise ValueError('labels must be an n-length list strings')
+            raise ValueError('labels must be an n-length list of strings')
 
         self.A = A
         self.n = n
@@ -160,9 +160,7 @@ class DirectedGraph:
         # we return a vector valued function that can be used for iteration
         return a, F
 
-    def iterate(
-            self, iters, initial_condition,
-            graph=False, save_img=False, title=None):
+    def iterate(self, iters, initial_condition, graph=False, save_img=False, title=None):
         """
         Model the dynamics on the network for iters timesteps given an intial
         condition
@@ -204,9 +202,7 @@ class DirectedGraph:
                 plt.show()
         return t
 
-    def iterate_with_perturbations(
-            self, iters, initial_condition, perterbations,
-            graph=False, save_img=False, title=None):
+    def iterate_with_perturbations(self, iters, initial_condition, perterbations, graph=False, save_img=False, title=None):
         """
         Model the dynamics on the network for iters timesteps given an intial
         condition
@@ -253,42 +249,38 @@ class DirectedGraph:
                 plt.show()
         return t
 
-
     def specialize(self, base, verbose=False):
         """
         Given a base set, specialize the adjacency matrix of a network
 
         Parameters:
-            base (list, int or str): list of base nodes, the other nodes will
-                become the specialized set
+            base (list): list of base nodes, the other nodes will become the
+                specialized set. The list elements may be integers corresponding
+                to the node indices, or strings corresponding to the node labels
             verbose (bool): print out key information as the code executes
         """
-
-        # if the base was given as a list of nodes then we convert them to the
-        # proper indexes
-        if type(base[0]) == str:
+        # if list elements are str, convert to corresponding node indices
+        if type(base[0]) is str:
             for i, k in enumerate(base):
                 base[i] = self.indexer[k]
-        elif type(base[0]) != int:
+        # error checking for invalid input
+        elif type(base[0]) is not int:
             if not np.issubdtype(base[0], np.integer):
                 raise ValueError('base set must be either a list of labels'
-                    'or a list of indices')
-        if type(base) != list:
-            base = list(base)
+                    ' or a list of indices')
+        # error checking for choosing more than all the nodes
         if len(base) > self.n:
-            raise ValueError('base list is too long')
+            raise ValueError('Base list cannot be larger than the number of nodes')
 
         base_size = len(base)
         # permute the matrix so the base set comes first
         self._base_first(base)
 
-        # initialize the new specialized matrix as a diagonal matrix with the
-        # base set in the first slot
+        # specialized matrix is constructed as a block diagonal
         B = self.A[:base_size, :base_size].copy()
-        diag = [B]
+        diag = [B]  # base set is first entry
 
-        # find the strongly connected components of the network
-            # sparse.csgraph.connected_components(A, connection='strong')
+        # construct compressed graph smallA; find strongly connected components
         smallA, comp = self._compress_graph(base_size)
 
         pressed_paths = self._find_paths_to_base(smallA, base_size, comp)
@@ -368,29 +360,28 @@ class DirectedGraph:
 
     def _base_first(self, base):
         """
-        Permutes the A matrix so that the base set corrosponds to the beginning
-        set of rows and columns in A
+        Permutes the A matrix so that the base set corresponds to the first
+            rows/columns of A
 
         Parameters:
-            base (list, int): a list of the indices of the base set
+            base (list): an integer list of the indices of the base set
 
         Returns:
             None
         """
+        # indices of nodes in the specializing set
+        specializing_set = [i for i in self.indices if i not in base]
+        # permutation of indices where the base set comes first
+        permute = base + specializing_set
 
-        # find the indices of the strongly connected set and append them to
-        # the end of the base set to for the permutation of A
-
-
-        to_specialize = [i for i in self.indices if i not in base]
-        permute = base + to_specialize
-        # Change the labeler to reflect the permutation and update the indexer
+        # Change the labeler to reflect the permutation
         self.labeler = {i : self.labeler[permute[i]] for i in range(self.n)}
+        # change the indexer to reflect the permutation
         self._update_indexer()
 
-        # This will rearrange the indices to put the base set first
-        pA = self.A[permute,:]
-        pA = pA[:,permute]
+        # permutes rows then columns of A to put base first
+        pA = self.A[permute, :]
+        pA = pA[:, permute]
 
         self.A = pA
         return
@@ -398,7 +389,7 @@ class DirectedGraph:
     def _compress_graph(self, base_size):
         """
         Creates a new matrix smallA that is the compressed adjacency matrix of
-        A, each strongly connected component is represented as a single node
+            A, each strongly connected component is represented as a single node
 
         Parameters:
             base_size (int): number of nodes in the base set
@@ -408,44 +399,50 @@ class DirectedGraph:
             comp (dict, int: list(str)): a labling dictionary maping each node
                 of the compressed graph to the set of nodes it represents
         """
-
-        # find the strongly connected components
+        # subgraph including only nodes to be specialized
         spec = self.A[base_size:, base_size:]
 
-        # we use nx to create a directed graph of this part
-        spec_graph = nx.DiGraph(spec.T)
+        # find the strongly connected components of spec
+        num_comp, SCC = sparse.csgraph.connected_components(spec, connection='strong'))
+        # extract indices of each connected component
+        SCComp = [np.where(SCC == i)[0] for i in range(num_comp)]
 
-        # use nx to find the strongly connected components of specG
-        SCComp = [np.array(list(c)) for c in nx.strongly_connected_components(spec_graph)]
-        num_comp = len(SCComp)
+        # maps smallA indices to base node labels
+        comp_base = {ind: [self.labeler[ind]] for ind in range(base_size)}
+        # maps smallA indices to list of associated SCC labels
+        comp_spec = {base_size + ind: [self.labeler[base_size + k]
+                        for k in SCComp[ind]] for ind in range(num_comp)}
+        # maps smallA indices to associated blcks
+        comp = comp_spec.update(comp_base)
+
+        # smallA will represent A with each SCC as a single node
         N = base_size + num_comp
-
-        # comp will be a dictionary mapping base nodes to components
-        # comp will keep track of the labels of the components
-        comp = {}
-        for i in range(base_size):
-            comp[i] = [self.labeler[i]]
-
-        for i in range(num_comp):
-            temp1 = SCComp[i]
-            comp[i+base_size] = [self.labeler[k+base_size] for k in temp1]
-
-        # smallA will for our compressed A matrix lumping together all the
-        # strongly connected components
-        smallA = np.zeros((N,N))
+        smallA = sparse.lil_matrix((N, N), dtype=int)
+        # update smallA with base node information
         smallA[:base_size, :base_size] = self.A[:base_size, :base_size]
 
+
+        # TODO: fix this
+        # update smallA with SCC information
         for i in range(base_size, N):
-            i_indices = [self.indexer[k] for k in comp[i]]
+            # *original* indices of the ith strongly connected component
+            SCC_i = [self.indexer[ind] for ind in comp[i]]
 
-            smallA[:base_size, i] = (self.A[:base_size, i_indices].sum(axis=1) != 0)*1.
-            smallA[i, :base_size] = (self.A[i_indices, :base_size].sum(axis=0) != 0)*1.
+            # updates smallA with SCC_i --> base_node connections
+            smallA[:base_size, i] = (self.A[:base_size, SCC_i].sum(axis=1) != 0).astype(int)
+            # updates smallA with base_node --> SCC_i connections
+            smallA[i, :base_size] = (self.A[SCC_i, :base_size].sum(axis=0) != 0).astype(int)
 
+            # update the SCC_i --> SCC_j connections (and vice-versa)
             for j in range(base_size, i):
-                j_indices = [self.indexer[k] for k in comp[j]]
+                # *original* indices of the jth strongly connected component
+                SCC_j = [self.indexer[ind] for ind in comp[j]]
 
-                smallA[i,j] = (not (self.A[i_indices, :][:, j_indices] == 0).all())*1.
-                smallA[j,i] = (not (self.A[j_indices, :][:, i_indices] == 0).all())*1.
+                # updates smallA with SCC_j --> SCC_i connections
+                smallA[i, j] = int((self.A[SCC_i, :][:, SCC_j] != 0).nnz != 0)
+                # updates smallA with SCC_i --> SCC_j connections
+                smallA[j, i] = int((self.A[SCC_j, :][:, SCC_i] != 0).nnz != 0)
+
         return smallA, comp
 
     def _find_paths_to_base(self, smallA, base_size, comp):
@@ -682,7 +679,6 @@ class DirectedGraph:
         labels = [self.labeler[i] for i in range(self.n)]
         return dict(zip(labels, np.sum(self.A, axis=1)))
 
-
     def detect_sync(self, iters=80, sync_tol=1e-2, otol=1e-1):
             """
             Determines which nodes in a network synchronize.
@@ -732,7 +728,6 @@ class DirectedGraph:
                     sync_communities.append((sync_tup, is_conv))
 
             return sync_communities
-
 
     def network_vis(
             self, use_eqp=False, iter_matrix=False, spec_layout=False,
