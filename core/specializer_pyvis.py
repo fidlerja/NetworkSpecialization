@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.linalg as la
 import scipy.optimize as opt
+from pyvis.network import Network
 import networkx as nx
 import itertools
 import matplotlib.pyplot as plt
@@ -83,7 +84,7 @@ class DirectedGraph:
         # we use the original indexer when we look at dynamics on the network
         # this dict doesn't change under specialization
         self.original_indexer = self.indexer.copy()
-        self.colors = dict()
+        self.colors = self.coloring()
 
 
 
@@ -233,7 +234,7 @@ class DirectedGraph:
         return t
 
 
-    def specialize(self, base, verbose=False):
+    def specialize(self, base, verbose=False, recolor=False):
         """
         Given a base set, specialize the adjacency matrix of a network
 
@@ -319,6 +320,9 @@ class DirectedGraph:
                 temp_paths.append([comp[k] for k in path])
             print(f'Paths from base node to base node:\n {temp_paths}\n')
             print(f'Number of nodes in the specialized matrix:\n {n_nodes}\n')
+
+        if recolor:
+            self.colors = self.coloring()
 
         return
 
@@ -734,7 +738,7 @@ class DirectedGraph:
         """
 
         if use_eqp:
-            colors = self.coloring()
+            colors = self.colors
             group_dict = {}
             for color in colors.keys():
                 for node in colors[color]:
@@ -750,54 +754,27 @@ class DirectedGraph:
                 for node in communities[i][0]:
                     group_dict[node] = i
 
-        # create (and relabel) a networkx graph object
+        # create (and relabel) a pyvis graph object
+        net = Network(directed=True)
+        net.barnes_hut(gravity=-30000,spring_length=7500)
+        net.show_buttons(filter_=['physics'])
         nxG = nx.relabel.relabel_nodes(nx.DiGraph(self.A.T), self.labeler)
 
         # set community membership as an attribute of nxG
         nx.set_node_attributes(nxG, group_dict, name='community')
 
-        # list of community number in order of how the nodes are stored
-        colors = [group_dict[node] for node in nxG.nodes()]
+        # generate random colors
+        c = ['#'+str(hex(np.random.randint(0,16777215)))[2:] for i in list(colors)]
 
-        plt.figure()
+        # add nodes to the pyvis object and color them according to group_dict
+        for node in group_dict.keys():
+            net.add_node(node,color=c[group_dict[node]],value=1)
 
-        if lin:
-            # for display of edge dynamics (linear dynamics only)
-            edge_weights = nx.get_edge_attributes(nxG, 'weight')
-            # edit the edge weights to be the correct dynamics
-            for edge in edge_weights:
-                i = self.origination(self.indexer[edge[1]])
-                j = self.origination(self.indexer[edge[0]])
-                edge_weights[edge] = lin_dyn[i, j]
+        # add edges directly from networkx object
+        net.add_edges(nxG.edges())
 
-
-
-        if spec_layout:
-            # draw the network
-            nx.draw_networkx(nxG, pos=nx.drawing.spectral_layout(nxG),
-                node_size=1000, arrowsize=20, node_color=colors,
-                cmap=plt.cm.Set3)
-            if lin:
-                # add edge weights
-                nx.draw_networkx_edge_labels(nxG,
-                    nx.drawing.spectral_layout(nxG), edge_labels=edge_weights)
-
-        else:
-            # draw the network
-            nx.draw_networkx(nxG, pos=nx.drawing.layout.planar_layout(nxG),
-                node_size=1000, arrowsize=20, node_color=colors,
-                cmap=plt.cm.Set3)
-            if lin:
-                # add edge weights
-                nx.draw_networkx_edge_labels(nxG,
-                    nx.drawing.layout.planar_layout(nxG),
-                    edge_labels=edge_weights)
-
-        plt.title(title)
-        if save_img:
-            plt.savefig(filename)
-
-        plt.show()
+        # show visualization as html
+        net.show('visualize.html')
 
     def coloring(self):
         """
@@ -824,14 +801,18 @@ class DirectedGraph:
                     # create a sub graph that is only of the
                     # two colors in question
                     sub_graph = self.A[color_dict[color1]][:,color_dict[color2]]
+
                     # the row sums will show the number of inputs
                     # from color2 to color1
                     inputs = np.sum(sub_graph, axis=1)
                     input_nums = set(inputs)
+
                     for num in input_nums:
                         cluster = np.where(inputs == num)[0]
+
                         # use relative indexing to find the correct nodes
                         cluster = set(color_dict[color1][cluster])
+
                         if cluster not in temp_new_clusters:
                             temp_new_clusters.append(cluster)
 
@@ -849,6 +830,7 @@ class DirectedGraph:
 
             for i, cluster in enumerate(new_clusters):
                 final_colors[i] = np.array(list(cluster))
+
             return final_colors
 
 
