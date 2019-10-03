@@ -6,6 +6,7 @@ import itertools
 import matplotlib.pyplot as plt
 import autograd as ag
 import autograd.numpy as anp
+from numba import jit
 
 
 ################################ WORK TO BE DONE ##############################
@@ -812,6 +813,7 @@ class DirectedGraph:
         """
 
         #helper function for input driven refinement
+        # @jit
         def _refine(color_dict):
             # initialize the lists and dictionaries that we need for the input
             # driven refinement
