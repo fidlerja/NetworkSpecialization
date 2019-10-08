@@ -22,19 +22,33 @@ def random_matrix(n):
 
     return (A, f, a)
 
-def random_test(M):
+def full_matrix(n):
+    A = np.ones((n,n))
+    A *= (np.eye(n) == 0)
+
+    f = [[zero for _ in range(n)] for _ in range(n)]
+    f = np.array(f)
+    #print(f)
+
+    a = np.diag(f)
+
+    return (A, f, a)
+
+def random_test(M,i):
     (A,f,a) = M
     labels = [str(i) for i in range(1,len(A)+1)]
     #print(A)
     #print(labels)
     G = s.DirectedGraph(A, (a,f), labels=labels)
-    G.network_vis(use_eqp=True,spec_layout=True)
+    # G.network_vis(use_eqp=True,spec_layout=True)
     Q0 = G.colors
-    G.specialize(['1','4'])
     G.network_vis(use_eqp=True,spec_layout=True)
-    Q1 = G.colors
 
-    return G, Q0, Q1
+    return G.specialize(labels[:i])
+
+    # Q1 = G.colors
+
+    # return G, Q0, Q1
 
 def basic_test():
     A = np.array([[0,0,0,1],

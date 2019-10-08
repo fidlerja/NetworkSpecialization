@@ -279,13 +279,14 @@ class DirectedGraph:
         # list diag to a strongly connected component set
         diag_labeler = {}
         i = 1
-
+        pressed_count = len(pressed_paths)
         for path in pressed_paths:
             components = [comp[k] for k in path]
             paths = self._path_combinations(components)
             comp_to_add = [self.A[[self.indexer[k] for k in c], :][:, [self.indexer[k] for k in c]] for c in components[1:-1]].copy()
-
+            path_count = len(paths)
             for p in paths:
+                comp_count = len(components)
                 for compt in components[1:-1]:
                     diag_labeler[i] = compt
                     i += 1
@@ -324,7 +325,7 @@ class DirectedGraph:
         if recolor:
             self.colors = self.coloring()
 
-        return
+        return (pressed_count,path_count,comp_count)
 
     def _update_indexer(self):
         """
