@@ -85,6 +85,7 @@ class DirectedGraph:
         # this dict doesn't change under specialization
         self.original_indexer = self.indexer.copy()
         self.colors = self.coloring()
+        # self.colors = self.A
 
 
 
@@ -760,6 +761,7 @@ class DirectedGraph:
         net.show_buttons(filter_=['physics'])
         nxG = nx.relabel.relabel_nodes(nx.DiGraph(self.A.T), self.labeler)
 
+
         # set community membership as an attribute of nxG
         nx.set_node_attributes(nxG, group_dict, name='community')
 
@@ -772,7 +774,7 @@ class DirectedGraph:
 
         # add edges directly from networkx object
         net.add_edges(nxG.edges())
-
+        print(nx.coloring.equitable_color(nxG,num_colors=self.n))
         # show visualization as html
         net.show('visualize.html')
 
@@ -844,4 +846,13 @@ class DirectedGraph:
             #if there are no new colors then the refinement is equivalent
             if len(colors.keys()) == len(_refine(colors).keys()):
                 refine = False
-        return colors
+
+        return colors,nx_colors#
+
+    def checker(self):
+        print(self.colors)
+        print(self.A)
+        print(self.A.sum(axis=1))
+
+        is_equitable = True
+        return is_equitable
