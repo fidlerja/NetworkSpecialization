@@ -1,4 +1,6 @@
 # test_coloring.py
+import sys
+sys.path.insert(0,'/Users/fidlerja/Desktop/Research/NetworkSpecialization/core/')
 import specializer_pyvis as s
 import numpy as np
 from importlib import reload
@@ -28,11 +30,13 @@ def random_test(M):
     #print(A)
     #print(labels)
     G = s.DirectedGraph(A, (a,f), labels=labels)
-    G.network_vis(use_eqp=True,spec_layout=True)
-    Q0 = G.colors
+    G.network_vis(use_eqp=True)
+
+    Q0 = G.coloring()
     G.specialize(['1','4'])
-    G.network_vis(use_eqp=True,spec_layout=True)
-    Q1 = G.colors
+    Q1 = G.coloring()
+    #G.network_vis(use_eqp=True,spec_layout=True)
+    # Q1 = G.colors
 
     return G, Q0, Q1
 
@@ -54,8 +58,11 @@ def basic_test():
     labels = ['1','2','3','4']
 
     G = s.DirectedGraph(A, (a,f), labels=labels)
-    G.network_vis(use_eqp=True,spec_layout=False)
-    # print(G.coloring())
-    G.specialize(['1','4'])
-    G.network_vis(use_eqp=True,spec_layout=False)
-    # print(G.coloring())
+    G.network_vis(use_eqp=True)
+    print(G.colors)
+    return G
+
+    G.specialize(['1','4'],recolor=True)
+    G.network_vis(use_eqp=True)
+    print(G.colors)
+    return G

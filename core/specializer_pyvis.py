@@ -84,7 +84,7 @@ class DirectedGraph:
         # we use the original indexer when we look at dynamics on the network
         # this dict doesn't change under specialization
         self.original_indexer = self.indexer.copy()
-        self.colors = self.coloring()
+        self.coloring()
 
 
 
@@ -322,7 +322,7 @@ class DirectedGraph:
             print(f'Number of nodes in the specialized matrix:\n {n_nodes}\n')
 
         if recolor:
-            self.colors = self.coloring()
+            self.coloring()
 
         return
 
@@ -717,9 +717,8 @@ class DirectedGraph:
 
 
     def network_vis(
-            self, use_eqp=False, iter_matrix=False, spec_layout=False,
-            lin=False, lin_dyn=None, title="Network Visualization",
-            save_img=False, filename='network_viz'):
+            self, use_eqp=False, iter_matrix=False, lin=False,
+            lin_dyn=None, filename='network_viz.html', physics=False):
         """
         Creates a visualization of the network G
         Parameters:
@@ -740,6 +739,7 @@ class DirectedGraph:
         if use_eqp:
             colors = self.colors
             group_dict = {}
+            print(self.colors)
             for color in colors.keys():
                 for node in colors[color]:
                     group_dict[self.labeler[node]] = color
@@ -756,8 +756,12 @@ class DirectedGraph:
 
         # create (and relabel) a pyvis graph object
         net = Network(directed=True)
-        net.barnes_hut(gravity=-30000,spring_length=7500)
-        net.show_buttons(filter_=['physics'])
+        net.barnes_hut(gravity=-30000,spring_length=750)
+
+
+        if physics:
+            net.show_buttons(filter_=['physics'])
+
         nxG = nx.relabel.relabel_nodes(nx.DiGraph(self.A.T), self.labeler)
 
         # set community membership as an attribute of nxG
@@ -774,7 +778,7 @@ class DirectedGraph:
         net.add_edges(nxG.edges())
 
         # show visualization as html
-        net.show('visualize.html')
+        net.show(filename)
 
     def coloring(self):
         """
@@ -844,4 +848,20 @@ class DirectedGraph:
             #if there are no new colors then the refinement is equivalent
             if len(colors.keys()) == len(_refine(colors).keys()):
                 refine = False
-        return colors
+        self.colors = colors
+
+    def color_checker(self):
+        A = self.A
+        receiving_nodes = dict()
+        for i in range(self.n):
+            receiving_nodes[i] = []
+            for j in range(self.n):
+                if A[i][j] != 0:
+                    for k in self.colors.keys():
+                        if j in self.colors[k]:
+                            receiving_nodes[i].append(k)
+        print(receiving_nodes)
+
+    
+
+        return receiving_nodes

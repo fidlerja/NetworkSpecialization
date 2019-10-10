@@ -20,12 +20,6 @@
         
 
         
-        #config {
-            float: left;
-            width: 400px;
-            height: 600px;
-        }
-        
 
         
 </style>
@@ -35,8 +29,6 @@
 <body>
 <div id = "mynetwork"></div>
 
-
-<div id = "config"></div>
 
 <script type="text/javascript">
 
@@ -55,18 +47,15 @@
         
 
         // parsing and collecting nodes and edges from the python
-        nodes = new vis.DataSet([{"color": "#e2dc32", "id": "1", "label": "1", "shape": "dot", "value": 1}, {"color": "#e2dc32", "id": "2", "label": "2", "shape": "dot", "value": 1}, {"color": "#de4780", "id": "3", "label": "3", "shape": "dot", "value": 1}, {"color": "#d4e10d", "id": "4", "label": "4", "shape": "dot", "value": 1}, {"color": "#eacf3b", "id": "5", "label": "5", "shape": "dot", "value": 1}, {"color": "#bfafb8", "id": "6", "label": "6", "shape": "dot", "value": 1}, {"color": "#30812d", "id": "7", "label": "7", "shape": "dot", "value": 1}]);
-        edges = new vis.DataSet([{"arrows": "to", "from": "1", "to": "4"}, {"arrows": "to", "from": "1", "to": "5"}, {"arrows": "to", "from": "2", "to": "3"}, {"arrows": "to", "from": "2", "to": "5"}, {"arrows": "to", "from": "2", "to": "7"}, {"arrows": "to", "from": "3", "to": "7"}, {"arrows": "to", "from": "4", "to": "1"}, {"arrows": "to", "from": "4", "to": "2"}, {"arrows": "to", "from": "4", "to": "5"}, {"arrows": "to", "from": "4", "to": "6"}, {"arrows": "to", "from": "5", "to": "1"}, {"arrows": "to", "from": "5", "to": "2"}, {"arrows": "to", "from": "5", "to": "6"}, {"arrows": "to", "from": "5", "to": "7"}, {"arrows": "to", "from": "6", "to": "4"}, {"arrows": "to", "from": "6", "to": "7"}, {"arrows": "to", "from": "7", "to": "5"}, {"arrows": "to", "from": "7", "to": "6"}]);
+        nodes = new vis.DataSet([{"color": "#a07952", "id": "1", "label": "1", "shape": "dot", "value": 1}, {"color": "#ee06d6", "id": "2", "label": "2", "shape": "dot", "value": 1}, {"color": "#ee06d6", "id": "3", "label": "3", "shape": "dot", "value": 1}, {"color": "#8ed949", "id": "4", "label": "4", "shape": "dot", "value": 1}]);
+        edges = new vis.DataSet([{"arrows": "to", "from": "1", "to": "2"}, {"arrows": "to", "from": "1", "to": "3"}, {"arrows": "to", "from": "2", "to": "3"}, {"arrows": "to", "from": "2", "to": "4"}, {"arrows": "to", "from": "3", "to": "2"}, {"arrows": "to", "from": "3", "to": "4"}, {"arrows": "to", "from": "4", "to": "1"}]);
 
         // adding nodes and edges to the graph
         data = {nodes: nodes, edges: edges};
 
         var options = {
     "configure": {
-        "enabled": true,
-        "filter": [
-            "physics"
-        ]
+        "enabled": false
     },
     "edges": {
         "color": {
@@ -89,7 +78,7 @@
             "damping": 0.09,
             "gravitationalConstant": -30000,
             "springConstant": 0.001,
-            "springLength": 7500
+            "springLength": 750
         },
         "enabled": true,
         "stabilization": {
@@ -104,10 +93,6 @@
         
         
 
-        
-        // if this network requires displaying the configure window,
-        // put it in its div
-        options.configure["container"] = document.getElementById("config");
         
 
         network = new vis.Network(container, data, options);
