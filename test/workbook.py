@@ -1,5 +1,4 @@
 import specializer as s
-import ranker as r
 import numpy as np
 from importlib import reload
 import networkx as nx
