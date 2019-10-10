@@ -64,7 +64,7 @@ class DirectedGraph:
         # convert A to sparse.csr_matrix
         A = sparse.csr_matrix(A).astype(int)
 
-        n,m = A.shape
+        n, m = A.shape
         # matrix must be nxn and should not have self edges
         if n != m :
             raise ValueError('Matrix not square')
@@ -290,7 +290,7 @@ class DirectedGraph:
 
         # we create this diag labeler which will associate an index of the
         # list diag to a strongly connected component set
-        diag_labeler = {}
+        diag_labeler = dict()
         i = 1
 
         for path in pressed_paths:
@@ -304,11 +304,13 @@ class DirectedGraph:
                     i += 1
                 diag += comp_to_add
                 links += self._link_adder(p, n_nodes, components)
-                n_nodes += sum(map(len, comp_to_add))
+                for _comp in comp_to_add:
+                    n_nodes += _comp.shape[0]
+                # n_nodes += sum(map(len, comp_to_add))
 
         # we update the labeler to correctly label the newly created nodes
         step = base_size
-        for i in range(1,len(diag)):
+        for i in range(1, len(diag)):
             comp_len = diag[i].shape[0]
             for k in range(comp_len):
                 self.labeler[step + k] = diag_labeler[i][k] + f'.{i}'
@@ -320,7 +322,7 @@ class DirectedGraph:
             print(f'This is the original matrix:\n{self.A}\n')
 
         # create the new specialized matrix
-        S = la.block_diag(*diag)
+        S = sparse.block_diag(diag).tolil()
         for l in links: S[l] = 1
         self.A = S
         self.indices = np.arange(n_nodes)
@@ -397,23 +399,41 @@ class DirectedGraph:
         Returns:
             smallA (ndarray, square): compressed adjacency matrix of A
             comp (dict, int: list(str)): a labling dictionary maping each node
-                of the compressed graph to the set of nodes it represents
+                of the compressed graph to the set of noto base node labels
+        # comp_base = {ind: [self.labeler[ind]] for ind in range(base_size)}
+        # # maps smallA indices to list of associated SCC labels
+        # comp_spec = {base_size + ind: [self.labeler[base_size + k]
+        #                 for k in SCComp[ind]] for ind in range(num_comp)}
+        # # maps smallA indices to associated blcks
+        # comp_base.update(comp_spec)
+        # comp = comp_base.copy()des it represents
         """
         # subgraph including only nodes to be specialized
         spec = self.A[base_size:, base_size:]
 
         # find the strongly connected components of spec
-        num_comp, SCC = sparse.csgraph.connected_components(spec, connection='strong'))
+        num_comp, SCC = sparse.csgraph.connected_components(spec, connection='strong')
         # extract indices of each connected component
-        SCComp = [np.where(SCC == i)[0] for i in range(num_comp)]
+        SCComp = [np.where(SCC == i)[0] for i in range(num_comp - 1, -1, -1)]
 
-        # maps smallA indices to base node labels
-        comp_base = {ind: [self.labeler[ind]] for ind in range(base_size)}
-        # maps smallA indices to list of associated SCC labels
-        comp_spec = {base_size + ind: [self.labeler[base_size + k]
-                        for k in SCComp[ind]] for ind in range(num_comp)}
-        # maps smallA indices to associated blcks
-        comp = comp_spec.update(comp_base)
+        # # maps smallA indices to base node labels
+        # comp_base = {ind: [self.labeler[ind]] for ind in range(base_size)}
+        # # maps smallA indices to list of associated SCC labels
+        # comp_spec = {base_size + ind: [self.labeler[base_size + k]
+        #                 for k in SCComp[ind]] for ind in range(num_comp)}
+        # # maps smallA indices to associated blcks
+        # comp_base.update(comp_spec)
+        # comp = comp_base.copy()
+
+        comp = {}
+        for i in range(base_size):
+            comp[i] = [self.labeler[i]]
+
+        for i in range(num_comp):
+            temp1 = SCComp[i]
+            comp[i+base_size] = [self.labeler[k+base_size] for k in temp1]
+
+
 
         # smallA will represent A with each SCC as a single node
         N = base_size + num_comp
@@ -465,30 +485,30 @@ class DirectedGraph:
         # find the path between every pair of nodes
         for b1 in range(base_size):
             for b2 in range(base_size):
-                # remove all other base ndes from the graph so we only find
+                # remove all other base nodes from the graph so we only find
                 # paths through the specialization set
                 if b1 == b2:
                     # in this case we look for cycles
                     mask = [b1] + list(range(base_size, N))
                     new_size = len(mask) + 1
-                    reducedA = np.zeros((new_size, new_size))
-                    reducedA[:-1, :-1] = smallA[mask,:][:, mask]
-                    # remove indoing edges from the base node and add to new
+                    reducedA = sparse.lil_matrix((new_size, new_size))
+                    reducedA[:-1, :-1] = smallA[mask, :][:, mask]
+                    # remove ingoing edges from the base node and add to new
                     # node
-                    reducedA[-1,:] = reducedA[0,:]
-                    reducedA[0,:] = np.zeros(new_size)
+                    reducedA[-1, :] = reducedA[0,:]
+                    reducedA[0, :] = sparse.lil_matrix((1, new_size))
                     G = nx.DiGraph(reducedA.T)
                     # find paths from the base node to the new node
                     # which is the same as finding cycles in this case
-                    paths = list(nx.all_simple_paths(G,0,new_size-1))
+                    paths = list(nx.all_simple_paths(G, 0, new_size-1))
 
                 else:
-                    mask = [b1,b2] + list(range(base_size, N))
-                    reducedA = smallA[mask,:][:,mask]
+                    mask = [b1, b2] + list(range(base_size, N))
+                    reducedA = smallA[mask, :][:, mask]
                     # remove base node interations
-                    reducedA[:2,:2] = np.zeros((2,2))
+                    reducedA[:2, :2] = sparse.lil_matrix((2, 2))
                     G = nx.DiGraph(reducedA.T)
-                    paths = list(nx.all_simple_paths(G,0,1))
+                    paths = list(nx.all_simple_paths(G, 0, 1))
 
                 # process the paths
                 for p in paths:
@@ -497,8 +517,9 @@ class DirectedGraph:
                             p = np.array(p) + base_size - 1
                         else:
                             p = np.array(p) + base_size - 2
-                        p[[0,-1]] = [b1,b2]
+                        p[[0, -1]] = [b1, b2]
                         pressed_paths.append(p)
+
         return pressed_paths
 
     def _path_combinations(self, components):
@@ -516,10 +537,21 @@ class DirectedGraph:
         # n_nodes will keep track of the number of nodes in each branch
         n_nodes = 1
 
+        # if verbose:
+        #     print('link_opt: {}'.format(link_opt))
+        #     print('path_length: {}'.format(path_length))
+        #     print('n_nodes: {}'.format(n_nodes))
+        #     if n_nodes > 30:
+        #         cont = input('CONTINUE??')
+        #         if cont == 'y':
+        #             pass
+        #         else:
+        #             return
+
         for i in range(path_length - 1):
             _i = [self.indexer[k] for k in components[i+1]]
             _j = [self.indexer[k] for k in components[i]]
-            rows, cols = np.where(self.A[_i,:][:,_j] == 1)
+            rows, cols = self.A[_i, :][:, _j].nonzero()
 
             if i == 0:
                 cols += [self.indexer[k] for k in components[0]]
@@ -530,11 +562,12 @@ class DirectedGraph:
             else:
                 rows += n_nodes
                 cols += n_nodes - len(components[i])
-            edges = zip(rows,cols)
+            edges = zip(rows, cols)
             n_nodes += len(components[i+1])
             link_opt.append(edges)
 
         all_paths = [list(P) for P in itertools.product(*link_opt)]
+
         return all_paths
 
     def _link_adder(self, path, n_nodes, components):
@@ -547,6 +580,16 @@ class DirectedGraph:
             n_nodes (int): number of nodes in the original graph
             components (list, list()):
         """
+        # if verbose:
+        #     if n_nodes > 30:
+        #         cont = input('CONTINUE???')
+        #         if cont is 'y':
+        #             pass
+        #         else:
+        #             return
+        #     print('path: {}'.format(path))
+        #     print('n_nodes: {}'.format(n_nodes))
+        #     print('components: '.format(components))
 
         links = []
         path_length = len(path)
@@ -843,8 +886,9 @@ class DirectedGraph:
                     sub_graph = self.A[color_dict[color1]][:,color_dict[color2]]
                     # the row sums will show the number of inputs
                     # from color2 to color1
-                    inputs = np.sum(sub_graph, axis=1)
+                    inputs = sub_graph.sum(axis=1).A1
                     input_nums = set(inputs)
+
                     for num in input_nums:
                         cluster = np.where(inputs == num)[0]
                         # use relative indexing to find the correct nodes
