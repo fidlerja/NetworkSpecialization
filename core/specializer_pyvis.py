@@ -851,17 +851,9 @@ class DirectedGraph:
         self.colors = colors
 
     def color_checker(self):
-        A = self.A
-        receiving_nodes = dict()
-        for i in range(self.n):
-            receiving_nodes[i] = []
-            for j in range(self.n):
-                if A[i][j] != 0:
-                    for k in self.colors.keys():
-                        if j in self.colors[k]:
-                            receiving_nodes[i].append(k)
-        print(receiving_nodes)
-
-    
-
-        return receiving_nodes
+        for color1 in self.colors.values():
+            for color2 in self.colors.values():
+                x = np.sum(self.A[color1][:,color2],axis=1)
+                if not (x==x[0]).all():
+                    return False
+        return True

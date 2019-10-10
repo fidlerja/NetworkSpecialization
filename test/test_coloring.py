@@ -1,6 +1,6 @@
 # test_coloring.py
 import sys
-sys.path.insert(0,'/Users/fidlerja/Desktop/Research/NetworkSpecialization/core/')
+sys.path.insert(0,'/home/adam/Desktop/Research/NetworkSpecialization/core/')
 import specializer_pyvis as s
 import numpy as np
 from importlib import reload
@@ -58,11 +58,11 @@ def basic_test():
     labels = ['1','2','3','4']
 
     G = s.DirectedGraph(A, (a,f), labels=labels)
-    G.network_vis(use_eqp=True)
+    # G.network_vis(use_eqp=True)
     print(G.colors)
     return G
 
     G.specialize(['1','4'],recolor=True)
-    G.network_vis(use_eqp=True)
+    # G.network_vis(use_eqp=True)
     print(G.colors)
     return G
