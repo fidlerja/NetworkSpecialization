@@ -1,5 +1,4 @@
 import specializer as s
-import ranker as r
 import numpy as np
 from importlib import reload
 import networkx as nx
@@ -57,9 +56,12 @@ if __name__ == "__main__":
     # G.iterate(20,np.random.random(8),graph=True)
     base = ['1','8','5','6','7']
     G.specialize(base)
+<<<<<<<<< Temporary merge branch 1:test/equit.py
     G.network_vis(use_eqp=True)
+=========
     # with open('half_spec.txt', 'w') as out_file:
     #     out_file.write(str(G.A))
     G.iterate(20,np.random.random(23),graph=True)
     # G.network_vis(use_eqp=True)
     # print(G.n)
+>>>>>>>>> Temporary merge branch 2:code/equit.py
