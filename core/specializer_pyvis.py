@@ -718,7 +718,7 @@ class DirectedGraph:
 
     def network_vis(
             self, use_eqp=False, iter_matrix=False, lin=False,
-            lin_dyn=None, filename='network_viz.html', physics=False):
+            lin_dyn=None, filename='network_viz.html', physics=False,silent=True):
         """
         Creates a visualization of the network G
         Parameters:
@@ -739,7 +739,7 @@ class DirectedGraph:
         if use_eqp:
             colors = self.colors
             group_dict = {}
-            print(self.colors)
+            # print(self.colors)
             for color in colors.keys():
                 for node in colors[color]:
                     group_dict[self.labeler[node]] = color
@@ -748,6 +748,7 @@ class DirectedGraph:
             # find synchronized communities
             communities = self.detect_sync(iters=80)
 
+            colors = self.colors
             # create a dictionary mapping each node to its community
             group_dict = {}
             for i in range(len(communities)):
@@ -778,7 +779,8 @@ class DirectedGraph:
         net.add_edges(nxG.edges())
 
         # show visualization as html
-        net.show(filename)
+        if not silent:
+            net.show(filename)
 
     def coloring(self):
         """

@@ -33,7 +33,7 @@ def random_test(M):
     G.network_vis(use_eqp=True)
 
     Q0 = G.coloring()
-    G.specialize(['1','4'])
+    G.specialize([str(i) for i in range(1,(len(A)+1)//2)])
     Q1 = G.coloring()
     #G.network_vis(use_eqp=True,spec_layout=True)
     # Q1 = G.colors
