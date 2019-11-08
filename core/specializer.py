@@ -843,9 +843,10 @@ class DirectedGraph:
                             if len(cluster) == 1:
                                 self.trivial_clusters.update(cluster)
                                 temp_trivial_clusters.add(tuple(cluster))
-            # remove trivial clusters from potential clusters
 
+            # remove trivial clusters from potential clusters
             temp_new_clusters = {tuple(cluster - self.trivial_clusters) for cluster in temp_new_clusters}
+
             try:
                 temp_new_clusters.remove(tuple())
             except:
@@ -891,28 +892,6 @@ class DirectedGraph:
 
 
     def color_checker(self):
-         inverse_dict = {}
-         for k in self.colors:
-             for v in self.colors[k]:
-                 inverse_dict[v] = k
-
-         L = []
-         for node in range(self.n):
-             tup = np.zeros(len(self.colors))
-             for rec in range(self.n):
-                 tup[inverse_dict[rec]] += self.A[node][rec]
-             L.append(tup)
-
-         conf_dict = {str(tup):[] for tup in L}
-         for i in range(len(L)):
-             conf_dict[str(L[i])].append(i)
-
-         for tup,color in zip(conf_dict.keys(),self.colors.keys()):
-             if not np.allclose(np.array(conf_dict[tup]),self.colors[color]):
-                 return False
-         return True
-
-    def sum_checker(self):
         for color1 in self.colors.values():
             for color2 in self.colors.values():
                 x = np.sum(self.A[color1][:,color2],axis=1)
