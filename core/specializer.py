@@ -84,6 +84,8 @@ class DirectedGraph:
         # this dict doesn't change under specialization
         self.original_indexer = self.indexer.copy()
         self.colors = dict()
+        self.trivial_clusters = set()
+        self.nontrivial_nodes = set(self.indices)
 
 
 
@@ -233,7 +235,7 @@ class DirectedGraph:
         return t
 
 
-    def specialize(self, base, verbose=False):
+    def specialize(self, base, verbose=False,recolor=True):
         """
         Given a base set, specialize the adjacency matrix of a network
 
@@ -319,6 +321,9 @@ class DirectedGraph:
                 temp_paths.append([comp[k] for k in path])
             print(f'Paths from base node to base node:\n {temp_paths}\n')
             print(f'Number of nodes in the specialized matrix:\n {n_nodes}\n')
+
+        if recolor:
+            self.coloring()
 
         return
 
@@ -715,7 +720,7 @@ class DirectedGraph:
     def network_vis(
             self, use_eqp=False, iter_matrix=False, spec_layout=False,
             lin=False, lin_dyn=None, title="Network Visualization",
-            save_img=False, filename='network_viz'):
+            save_img=False, filename='network_viz',show=True):
         """
         Creates a visualization of the network G
         Parameters:
@@ -734,7 +739,7 @@ class DirectedGraph:
         """
 
         if use_eqp:
-            colors = self.coloring()
+            colors = self.colors
             group_dict = {}
             for color in colors.keys():
                 for node in colors[color]:
@@ -796,8 +801,8 @@ class DirectedGraph:
         plt.title(title)
         if save_img:
             plt.savefig(filename)
-
-        plt.show()
+        if show:
+            plt.show()
 
     def coloring(self):
         """
@@ -816,8 +821,9 @@ class DirectedGraph:
             # initialize the lists and dictionaries that we need for the input
             # driven refinement
             final_colors = {}
-            new_clusters = []
+            new_clusters = set()
             temp_new_clusters = []
+            temp_trivial_clusters = set()
             # for every cluster we examine the inputs from every other cluster
             for color1 in color_dict.keys():
                 for color2 in color_dict.keys():
@@ -834,32 +840,82 @@ class DirectedGraph:
                         cluster = set(color_dict[color1][cluster])
                         if cluster not in temp_new_clusters:
                             temp_new_clusters.append(cluster)
+                            if len(cluster) == 1:
+                                self.trivial_clusters.update(cluster)
+                                temp_trivial_clusters.add(tuple(cluster))
+            # remove trivial clusters from potential clusters
+
+            temp_new_clusters = {tuple(cluster - self.trivial_clusters) for cluster in temp_new_clusters}
+            try:
+                temp_new_clusters.remove(tuple())
+            except:
+                pass
 
             # for every node we find the smallest cluster that contains that
             # node and that is the cluster we submit for the new coloring
-            for node in self.indices:
+            for node in self.nontrivial_nodes:
                 potential = None
                 len_potential = np.inf
                 for cluster in temp_new_clusters:
                     if node in cluster and len(cluster) < len_potential:
-                        potential = cluster.copy()
+                        potential = cluster#.copy()
                         len_potential = len(potential)
-                if potential not in new_clusters:
-                    new_clusters.append(potential)
 
+                if potential not in new_clusters and potential is not None:
+                    new_clusters.add(potential)
+
+            # add trivial clusters back
+            new_clusters.update(temp_trivial_clusters)
+
+            # remove trivial clusters from nontrivial nodes for temporal improvement
+            self.nontrivial_nodes -= self.trivial_clusters
             for i, cluster in enumerate(new_clusters):
                 final_colors[i] = np.array(list(cluster))
             return final_colors
 
 
         # we begin by coloring all every node the same color
-        colors = {0 : self.indices.copy()}
+        next_colors = {0 : self.indices.copy()}
 
         # we then iteratively apply input driven refinement to coarsen
         refine = True
+        counter = 0
         while refine:
-            colors = _refine(colors)
-            #if there are no new colors then the refinement is equivalent
-            if len(colors.keys()) == len(_refine(colors).keys()):
+            counter += 1
+            colors = _refine(next_colors)
+            #if there are no new colors then the refinement is equivalent\
+            next_colors = _refine(colors)
+            if len(colors.keys()) == len(next_colors.keys()):
                 refine = False
-        return colors
+        self.colors = colors
+
+
+    def color_checker(self):
+         inverse_dict = {}
+         for k in self.colors:
+             for v in self.colors[k]:
+                 inverse_dict[v] = k
+
+         L = []
+         for node in range(self.n):
+             tup = np.zeros(len(self.colors))
+             for rec in range(self.n):
+                 tup[inverse_dict[rec]] += self.A[node][rec]
+             L.append(tup)
+
+         conf_dict = {str(tup):[] for tup in L}
+         for i in range(len(L)):
+             conf_dict[str(L[i])].append(i)
+
+         for tup,color in zip(conf_dict.keys(),self.colors.keys()):
+             if not np.allclose(np.array(conf_dict[tup]),self.colors[color]):
+                 return False
+         return True
+
+    def sum_checker(self):
+        for color1 in self.colors.values():
+            for color2 in self.colors.values():
+                x = np.sum(self.A[color1][:,color2],axis=1)
+                if not (x==x[0]).all():
+                    return False
+        return True
