@@ -1,11 +1,16 @@
-import specializer as s
-import ranker as r
+import sys
+import os
+path = os.getcwd()
+sys.path.insert(1, path[:-4])
+
+import core.specializer as s
 import numpy as np
 from importlib import reload
 import networkx as nx
 import matplotlib.pyplot as plt
 import time
 import autograd.numpy as anp
+
 
 if __name__ == "__main__":
     reload(s)

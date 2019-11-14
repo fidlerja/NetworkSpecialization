@@ -1,12 +1,12 @@
 import numpy as np
 import scipy.linalg as la
 import scipy.optimize as opt
+from pyvis.network import Network
 import networkx as nx
 import itertools
 import matplotlib.pyplot as plt
 import autograd as ag
 import autograd.numpy as anp
-from numba import jit
 
 
 ################################ WORK TO BE DONE ##############################
@@ -84,9 +84,7 @@ class DirectedGraph:
         # we use the original indexer when we look at dynamics on the network
         # this dict doesn't change under specialization
         self.original_indexer = self.indexer.copy()
-        self.colors = dict()
-        self.trivial_clusters = set()
-        self.nontrivial_nodes = set(self.indices)
+        self.coloring()
 
 
 
@@ -236,7 +234,7 @@ class DirectedGraph:
         return t
 
 
-    def specialize(self, base, verbose=False,recolor=True):
+    def specialize(self, base, verbose=False, recolor=False):
         """
         Given a base set, specialize the adjacency matrix of a network
 
@@ -719,9 +717,8 @@ class DirectedGraph:
 
 
     def network_vis(
-            self, use_eqp=False, iter_matrix=False, spec_layout=False,
-            lin=False, lin_dyn=None, title="Network Visualization",
-            save_img=False, filename='network_viz',show=True):
+            self, use_eqp=False, iter_matrix=False, lin=False,
+            lin_dyn=None, filename='network_viz.html', physics=False,silent=True):
         """
         Creates a visualization of the network G
         Parameters:
@@ -742,6 +739,7 @@ class DirectedGraph:
         if use_eqp:
             colors = self.colors
             group_dict = {}
+            # print(self.colors)
             for color in colors.keys():
                 for node in colors[color]:
                     group_dict[self.labeler[node]] = color
@@ -750,60 +748,39 @@ class DirectedGraph:
             # find synchronized communities
             communities = self.detect_sync(iters=80)
 
+            colors = self.colors
             # create a dictionary mapping each node to its community
             group_dict = {}
             for i in range(len(communities)):
                 for node in communities[i][0]:
                     group_dict[node] = i
 
-        # create (and relabel) a networkx graph object
+        # create (and relabel) a pyvis graph object
+        net = Network(directed=True)
+        net.barnes_hut(gravity=-30000,spring_length=750)
+
+
+        if physics:
+            net.show_buttons(filter_=['physics'])
+
         nxG = nx.relabel.relabel_nodes(nx.DiGraph(self.A.T), self.labeler)
 
         # set community membership as an attribute of nxG
         nx.set_node_attributes(nxG, group_dict, name='community')
 
-        # list of community number in order of how the nodes are stored
-        colors = [group_dict[node] for node in nxG.nodes()]
+        # generate random colors
+        c = ['#'+str(hex(np.random.randint(0,16777215)))[2:] for i in list(colors)]
 
-        plt.figure()
+        # add nodes to the pyvis object and color them according to group_dict
+        for node in group_dict.keys():
+            net.add_node(node,color=c[group_dict[node]],value=1)
 
-        if lin:
-            # for display of edge dynamics (linear dynamics only)
-            edge_weights = nx.get_edge_attributes(nxG, 'weight')
-            # edit the edge weights to be the correct dynamics
-            for edge in edge_weights:
-                i = self.origination(self.indexer[edge[1]])
-                j = self.origination(self.indexer[edge[0]])
-                edge_weights[edge] = lin_dyn[i, j]
+        # add edges directly from networkx object
+        net.add_edges(nxG.edges())
 
-
-
-        if spec_layout:
-            # draw the network
-            nx.draw_networkx(nxG, pos=nx.drawing.spectral_layout(nxG),
-                node_size=1000, arrowsize=20, node_color=colors,
-                cmap=plt.cm.Set3)
-            if lin:
-                # add edge weights
-                nx.draw_networkx_edge_labels(nxG,
-                    nx.drawing.spectral_layout(nxG), edge_labels=edge_weights)
-
-        else:
-            # draw the network
-            nx.draw_networkx(nxG, pos=nx.drawing.layout.planar_layout(nxG),
-                node_size=1000, arrowsize=20, node_color=colors,
-                cmap=plt.cm.Set3)
-            if lin:
-                # add edge weights
-                nx.draw_networkx_edge_labels(nxG,
-                    nx.drawing.layout.planar_layout(nxG),
-                    edge_labels=edge_weights)
-
-        plt.title(title)
-        if save_img:
-            plt.savefig(filename)
-        if show:
-            plt.show()
+        # show visualization as html
+        if not silent:
+            net.show(filename)
 
     def coloring(self):
         """
@@ -818,80 +795,62 @@ class DirectedGraph:
         """
 
         #helper function for input driven refinement
-        # @jit
         def _refine(color_dict):
             # initialize the lists and dictionaries that we need for the input
             # driven refinement
             final_colors = {}
-            new_clusters = set()
+            new_clusters = []
             temp_new_clusters = []
-            temp_trivial_clusters = set()
             # for every cluster we examine the inputs from every other cluster
             for color1 in color_dict.keys():
                 for color2 in color_dict.keys():
                     # create a sub graph that is only of the
                     # two colors in question
                     sub_graph = self.A[color_dict[color1]][:,color_dict[color2]]
+
                     # the row sums will show the number of inputs
                     # from color2 to color1
                     inputs = np.sum(sub_graph, axis=1)
                     input_nums = set(inputs)
+
                     for num in input_nums:
                         cluster = np.where(inputs == num)[0]
+
                         # use relative indexing to find the correct nodes
                         cluster = set(color_dict[color1][cluster])
+
                         if cluster not in temp_new_clusters:
                             temp_new_clusters.append(cluster)
-                            if len(cluster) == 1:
-                                self.trivial_clusters.update(cluster)
-                                temp_trivial_clusters.add(tuple(cluster))
-
-            # remove trivial clusters from potential clusters
-            temp_new_clusters = {tuple(cluster - self.trivial_clusters) for cluster in temp_new_clusters}
-
-            try:
-                temp_new_clusters.remove(tuple())
-            except:
-                pass
 
             # for every node we find the smallest cluster that contains that
             # node and that is the cluster we submit for the new coloring
-            for node in self.nontrivial_nodes:
+            for node in self.indices:
                 potential = None
                 len_potential = np.inf
                 for cluster in temp_new_clusters:
                     if node in cluster and len(cluster) < len_potential:
-                        potential = cluster#.copy()
+                        potential = cluster.copy()
                         len_potential = len(potential)
+                if potential not in new_clusters:
+                    new_clusters.append(potential)
 
-                if potential not in new_clusters and potential is not None:
-                    new_clusters.add(potential)
-
-            # add trivial clusters back
-            new_clusters.update(temp_trivial_clusters)
-
-            # remove trivial clusters from nontrivial nodes for temporal improvement
-            self.nontrivial_nodes -= self.trivial_clusters
             for i, cluster in enumerate(new_clusters):
                 final_colors[i] = np.array(list(cluster))
+
             return final_colors
 
 
         # we begin by coloring all every node the same color
-        next_colors = {0 : self.indices.copy()}
+        colors = {0 : self.indices.copy()}
 
         # we then iteratively apply input driven refinement to coarsen
         refine = True
-        counter = 0
         while refine:
-            counter += 1
-            colors = _refine(next_colors)
-            #if there are no new colors then the refinement is equivalent\
-            next_colors = _refine(colors)
-            if len(colors.keys()) == len(next_colors.keys()):
+            colors = _refine(colors)
+            #if there are no new colors then the refinement is equivalent
+            if len(colors.keys()) == len(_refine(colors).keys()):
                 refine = False
         self.colors = colors
-
 
     def color_checker(self):
         for color1 in self.colors.values():
