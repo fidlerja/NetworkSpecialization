@@ -1,3 +1,5 @@
+import sys
+sys.path.append('/home/ethan/Research/NetworkSpecialization/')
 import core.specializer as s
 import numpy as np
 from importlib import reload
@@ -5,7 +7,6 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import time
 import autograd.numpy as anp
-import sys
 np.set_printoptions(threshold=sys.maxsize)
 
 if __name__ == "__main__":
@@ -49,16 +50,30 @@ if __name__ == "__main__":
 
     a = np.array([zero,f1,f1,f1,f1,f1,f1,f1])
     labels = ['1','2','3','4','5','6','7','8']
+    counts = []
+    for i in range(20):
+        G = s.DirectedGraph(A, (a,f), labels=labels)
 
-    G = s.DirectedGraph(A, (a,f), labels=labels)
+        for i in range(5):
+            base = np.random.choice(G.indices, int(G.n*0.9), replace=False)
+            G.specialize(base)
+
+        data = G.coloring()
+        for key in data.keys():
+            counts.append(len(data[key]))
+            
+        print(G.n)
+    plt.hist(counts)
+    plt.show()
+
     # print(G.coloring())
     # G.network_vis()#use_eqp=True)
     # G.iterate(20,np.random.random(8),graph=True)
-    base = ['1','8','5','6','7']
-    G.specialize(base)
-    G.network_vis(use_eqp=True)
+    # base = ['1','8','5','6','7']
+    # G.specialize(base)
+    # G.network_vis(use_eqp=True)
     # with open('half_spec.txt', 'w') as out_file:
     #     out_file.write(str(G.A))
-    G.iterate(20,np.random.random(23),graph=True)
+    # G.iterate(20,np.random.random(23),graph=True)
     # G.network_vis(use_eqp=True)
     # print(G.n)
