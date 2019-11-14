@@ -1,8 +1,9 @@
 import sys
+import os
+path = os.getcwd()
+sys.path.insert(1, path[:-4])
 
-sys.path.insert(1, '/home/ethan/Research/NetworkSpecialization/core')
-
-import specializer as s
+import core.specializer as s
 import numpy as np
 from importlib import reload
 import networkx as nx

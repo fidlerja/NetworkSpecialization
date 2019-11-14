@@ -1,7 +1,16 @@
 import sys
-from specializer import *
-from scipy.io import mmread
+import os
+path = os.getcwd()
+sys.path.insert(1, path[:-4])
+
+import core.specializer as s
+import numpy as np
 from importlib import reload
+import networkx as nx
+import matplotlib.pyplot as plt
+import time
+import autograd.numpy as anp
+from scipy.io import mmread
 import pickle
 import multiprocessing as mp
 
@@ -10,7 +19,7 @@ def export_colors(datafile, outfile):
         A = mmread(datafile)
         A = A.toarray()
         d = np.zeros_like(A)
-        G = DirectedGraph(A, d)
+        G = s.DirectedGraph(A, d)
         colors = G.coloring()
         with open(outfile, 'wb') as out:
             pickle.dump(colors, out)

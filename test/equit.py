@@ -1,5 +1,8 @@
 import sys
-sys.path.append('/home/ethan/Research/NetworkSpecialization/')
+import os
+path = os.getcwd()
+sys.path.insert(1, path[:-4])
+
 import core.specializer as s
 import numpy as np
 from importlib import reload
@@ -7,6 +10,7 @@ import networkx as nx
 import matplotlib.pyplot as plt
 import time
 import autograd.numpy as anp
+
 np.set_printoptions(threshold=sys.maxsize)
 
 if __name__ == "__main__":
