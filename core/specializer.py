@@ -460,7 +460,7 @@ class DirectedGraph:
                     new_size = len(mask) + 1
                     reducedA = np.zeros((new_size, new_size))
                     reducedA[:-1, :-1] = smallA[mask,:][:, mask]
-                    # remove indoing edges from the base node and add to new
+                    # remove in going edges from the base node and add to new
                     # node
                     reducedA[-1,:] = reducedA[0,:]
                     reducedA[0,:] = np.zeros(new_size)
@@ -647,7 +647,7 @@ class DirectedGraph:
         Returns:
             (dict):
                 (keys): labels of the nodes
-                (values): the associeated eigencentrality
+                (values): the associated eigencentrality
         """
 
         # we shift the matrix to find the true dominant eigen value
@@ -740,10 +740,11 @@ class DirectedGraph:
         """
 
         if use_eqp:
-            colors = self.colors
+            self.coloring()
+            self.colors
             group_dict = {}
-            for color in colors.keys():
-                for node in colors[color]:
+            for color in self.colors.keys():
+                for node in self.colors[color]:
                     group_dict[self.labeler[node]] = color
 
         else:
@@ -822,6 +823,7 @@ class DirectedGraph:
         def _refine(color_dict):
             # initialize the lists and dictionaries that we need for the input
             # driven refinement
+
             final_colors = {}
             new_clusters = set()
             temp_new_clusters = []
@@ -846,16 +848,16 @@ class DirectedGraph:
                                 self.trivial_clusters.update(cluster)
                                 temp_trivial_clusters.add(tuple(cluster))
 
-            # remove trivial clusters from potential clusters
+            # remove trivial clusters from potential clusters\
             temp_new_clusters = {tuple(cluster - self.trivial_clusters) for cluster in temp_new_clusters}
-
+            
             try:
                 temp_new_clusters.remove(tuple())
             except:
                 pass
-
-            # for every node we find the smallest cluster that contains that
-            # node and that is the cluster we submit for the new coloring
+            
+            # for every node we find the smallest cluster containing that
+            # node, and that is the cluster we submit for the new coloring
             for node in self.nontrivial_nodes:
                 potential = None
                 len_potential = np.inf
@@ -879,6 +881,8 @@ class DirectedGraph:
 
         # we begin by coloring all every node the same color
         next_colors = {0 : self.indices.copy()}
+        self.trivial_clusters = set()
+        self.nontrivial_nodes = set(self.indices)
 
         # we then iteratively apply input driven refinement to coarsen
         refine = True
