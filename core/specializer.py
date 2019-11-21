@@ -323,6 +323,9 @@ class DirectedGraph:
             print(f'Paths from base node to base node:\n {temp_paths}\n')
             print(f'Number of nodes in the specialized matrix:\n {n_nodes}\n')
 
+        # the coloring must be set to none
+        self.colors = dict()
+
         if recolor:
             self.coloring()
 
@@ -740,7 +743,8 @@ class DirectedGraph:
         """
 
         if use_eqp:
-            self.coloring()
+            if self.colors == dict():
+                self.coloring()
             self.colors
             group_dict = {}
             for color in self.colors.keys():
@@ -881,6 +885,8 @@ class DirectedGraph:
 
         # we begin by coloring all every node the same color
         next_colors = {0 : self.indices.copy()}
+
+        # reset the attributes that influence the outcome of the algorithm
         self.trivial_clusters = set()
         self.nontrivial_nodes = set(self.indices)
 
