@@ -245,7 +245,7 @@ class DirectedGraph:
                 become the specialized set
             verbose (bool): print out key information as the code executes
         """
-
+        print('Specializing...',end=' ')
         # if the base was given as a list of nodes then we convert them to the
         # proper indexes
         if type(base[0]) == str:
@@ -325,7 +325,7 @@ class DirectedGraph:
 
         if recolor:
             self.coloring()
-
+        print('Done!')
         return
 
     def _update_indexer(self):
@@ -744,7 +744,7 @@ class DirectedGraph:
             group_dict = {}
             for color in colors.keys():
                 for node in colors[color]:
-                    group_dict[self.labeler[node]] = color
+                    group_dict[node] = color
 
         else:
             # find synchronized communities
@@ -816,7 +816,7 @@ class DirectedGraph:
                 unique color and the associated list a list of indices that
                 are in the cluster
         """
-
+        print('Coloring...',end=' ')
         #helper function for input driven refinement
         # @jit
         def _refine(color_dict):
@@ -891,7 +891,7 @@ class DirectedGraph:
             if len(colors.keys()) == len(next_colors.keys()):
                 refine = False
         self.colors = colors
-
+        print('Done!')
 
     def color_checker(self):
         for color1 in self.colors.values():
