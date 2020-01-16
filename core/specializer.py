@@ -25,7 +25,6 @@ class DirectedGraph:
     """
     Creates a directed graph that is meant to represent a dynamical network,
     both it's structure and dynamics
-
     Attributes:
         A (Square, ndarray): the adjecency matrix of a directed graph where
             A(i,j) is node i receiving from node j
@@ -38,7 +37,6 @@ class DirectedGraph:
         labeler (dict(int, str)): maps indices to labels
         indexer (dict(str, int)): maps labels to indices
         colors (dict(int, list(int))): cluster dictionary
-
     Methods:
         specialize()
         iterate()
@@ -94,7 +92,6 @@ class DirectedGraph:
         """
         Returns the original index, associated with the matrix valued dynamics
         function, of a given node index
-
         Parameters:
             i (int): the current index of a given node in self.A
         Returns:
@@ -112,7 +109,6 @@ class DirectedGraph:
     def set_dynamics(self):
         """
         Using a matrix valued function, set the dynamics of the network
-
         Implicit Parameters:
             f (nxn matrix valued function): this discribes the independent
                 influence the jth node has on the ith node it will use the
@@ -149,7 +145,6 @@ class DirectedGraph:
         """
         Model the dynamics on the network for iters timesteps given an intial
         condition
-
         Parameters
             iters (int): number of timsteps to be simulated
             initial_condition (ndarray): initial conditions of the nodes
@@ -192,7 +187,6 @@ class DirectedGraph:
         """
         Model the dynamics on the network for iters timesteps given an intial
         condition
-
         Parameters
             iters (int): number of timsteps to be simulated
             initial_condition (ndarray): initial conditions of the nodes
@@ -239,13 +233,12 @@ class DirectedGraph:
     def specialize(self, base, verbose=False,recolor=True):
         """
         Given a base set, specialize the adjacency matrix of a network
-
         Parameters:
             base (list, int or str): list of base nodes, the other nodes will
                 become the specialized set
             verbose (bool): print out key information as the code executes
         """
-        print('Specializing...',end=' ')
+
         # if the base was given as a list of nodes then we convert them to the
         # proper indexes
         if type(base[0]) == str:
@@ -325,7 +318,7 @@ class DirectedGraph:
 
         if recolor:
             self.coloring()
-        print('Done!')
+
         return
 
     def _update_indexer(self):
@@ -354,10 +347,8 @@ class DirectedGraph:
         """
         Permutes the A matrix so that the base set corrosponds to the beginning
         set of rows and columns in A
-
         Parameters:
             base (list, int): a list of the indices of the base set
-
         Returns:
             None
         """
@@ -383,10 +374,8 @@ class DirectedGraph:
         """
         Creates a new matrix smallA that is the compressed adjacency matrix of
         A, each strongly connected component is represented as a single node
-
         Parameters:
             base_size (int): number of nodes in the base set
-
         Returns:
             smallA (ndarray, square): compressed adjacency matrix of A
             comp (dict, int: list(str)): a labling dictionary maping each node
@@ -436,11 +425,9 @@ class DirectedGraph:
         """
         Finds all the paths between the base nodes that pass through the
         specialization set in the compressed graph
-
         Parameters:
             smallA (ndarray): a compressed adjecency matrix
             base_size (int): number of nodes in the base set
-
         Returns:
             pressed_paths (list, list(str)): list of paths that pass through
                 the specialization set
@@ -493,7 +480,6 @@ class DirectedGraph:
         Given a path through the connected components of A, find every unique
         combination of edges between the components that can be followed to
         complete the given path
-
         Parameters:
             components (list, ):
         """
@@ -528,7 +514,6 @@ class DirectedGraph:
         """
         Produces the link needed to add a branch of stringly connected
         components to a graph with n_nodes
-
         Parameters:
             path (list, tuple): edges between component nodes
             n_nodes (int): number of nodes in the original graph
@@ -670,7 +655,6 @@ class DirectedGraph:
     def detect_sync(self, iters=80, sync_tol=1e-2, otol=1e-1):
             """
             Determines which nodes in a network synchronize.
-
             Parameters:
                 G (DirectedGraph): The DirectedGraph of interest
                 iter_matrix (ndarray): mxn array containing the values of m
@@ -679,7 +663,6 @@ class DirectedGraph:
                     (for use when iter_matrix is not explicitly passed in)
                 sync_tol (float): tolerance for synchronization
                 otol (float): tolerance for stability
-
             Returns:
                 sync_communities (tuple): of the form ((community), bool),
                         where the bool represents if the community is stable
@@ -744,7 +727,7 @@ class DirectedGraph:
             group_dict = {}
             for color in colors.keys():
                 for node in colors[color]:
-                    group_dict[node] = color
+                    group_dict[self.labeler[node]] = color
 
         else:
             # find synchronized communities
@@ -816,7 +799,7 @@ class DirectedGraph:
                 unique color and the associated list a list of indices that
                 are in the cluster
         """
-        print('Coloring...',end=' ')
+
         #helper function for input driven refinement
         # @jit
         def _refine(color_dict):
@@ -891,7 +874,7 @@ class DirectedGraph:
             if len(colors.keys()) == len(next_colors.keys()):
                 refine = False
         self.colors = colors
-        print('Done!')
+
 
     def color_checker(self):
         for color1 in self.colors.values():
